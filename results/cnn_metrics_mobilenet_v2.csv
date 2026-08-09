@@ -1,0 +1,3 @@
+n,accuracy,precision,recall,f1,roc_auc,pred_fake_rate,model,evaluated_on,diag_best_normal,diag_best_inverted,diag_best,diag_polarity,diag_verdict
+4000,0.943,0.946122860020141,0.9395,0.9427997992975414,0.9869220000000001,0.4965,mobilenet_v2,A (in-domain),,,,,
+6000,0.511,0.5767441860465117,0.08266666666666667,0.1446064139941691,0.5593071111111112,0.07166666666666667,mobilenet_v2,B (cross-dataset),0.5453333333333333,0.49666666666666665,0.5453333333333333,normal,REPRESENTATION failure - no transferable signal

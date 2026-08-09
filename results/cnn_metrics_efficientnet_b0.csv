@@ -1,0 +1,3 @@
+n,accuracy,precision,recall,f1,roc_auc,pred_fake_rate,model,evaluated_on,diag_best_normal,diag_best_inverted,diag_best,diag_polarity,diag_verdict
+4000,0.94575,0.9148441135411819,0.983,0.9476982405398892,0.99096975,0.53725,efficientnet_b0,A (in-domain),,,,,
+6000,0.5038333333333334,0.5282555282555282,0.07166666666666667,0.12621074258878778,0.5284663333333333,0.06783333333333333,efficientnet_b0,B (cross-dataset),0.522,0.49966666666666665,0.522,normal,REPRESENTATION failure - no transferable signal
