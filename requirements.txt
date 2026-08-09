@@ -1,0 +1,47 @@
+# COM7014 Advanced Computing Project - Deepfake Detection
+# Python 3.11, CPU only (no CUDA)
+#
+# IMPORTANT: install PyTorch FIRST using the CPU index URL, otherwise pip
+# pulls the ~2.5GB CUDA build which is useless on this machine.
+#
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#   pip install -r requirements.txt
+#
+# See SETUP.md for the full walkthrough.
+
+# --- Deep learning (install via the CPU index URL above) ---
+torch>=2.2.0
+torchvision>=0.17.0
+
+# --- Classical ML baselines ---
+scikit-learn>=1.4.0
+scikit-image>=0.22.0
+scipy>=1.12.0
+
+# --- Image handling ---
+opencv-python>=4.9.0
+Pillow>=10.2.0
+
+# --- Data ---
+# NOTE: no upper bound on numpy. An earlier `<2.0.0` pin here forced a
+# downgrade to 1.26.4 and held opencv back to 4.11, because every other
+# wheel in this stack (torch 2.13, pandas 3.x, scipy 1.17, scikit-image
+# 0.26) is built against the numpy 2.x C ABI. Mixing them mostly works but
+# is a latent source of very confusing binary-incompatibility crashes.
+numpy>=1.26.0
+pandas>=2.2.0
+
+# --- Plotting ---
+matplotlib>=3.8.0
+seaborn>=0.13.0
+
+# --- Config and utilities ---
+PyYAML>=6.0.1
+tqdm>=4.66.0
+
+# --- Dataset download ---
+kaggle>=1.6.0
+
+# --- Notebooks ---
+jupyterlab>=4.1.0
+ipywidgets>=8.1.0

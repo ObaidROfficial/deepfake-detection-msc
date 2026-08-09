@@ -1,0 +1,33 @@
+# Normalise line endings so the repository is consistent regardless of the
+# operating system it is cloned on. Without this, files committed from Windows
+# carry CRLF endings and produce spurious whole-file diffs when opened on
+# Linux or macOS - which matters here because the repository is submitted for
+# assessment and may be cloned on a different platform.
+
+# Default: normalise to LF in the repository, convert to the platform's
+# native endings in the working copy.
+* text=auto
+
+# Explicitly text
+*.py    text diff=python
+*.md    text
+*.txt   text
+*.yaml  text
+*.yml   text
+*.csv   text
+*.json  text
+
+# Jupyter notebooks are JSON but diff badly. Marking them so git does not
+# attempt line-ending conversion inside embedded base64 image output.
+*.ipynb text eol=lf
+
+# Binary - never convert, never diff
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.pt    binary
+*.pth   binary
+*.npy   binary
+*.pkl   binary
+*.zip   binary
+*.pdf   binary

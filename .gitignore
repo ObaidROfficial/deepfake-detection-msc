@@ -1,0 +1,77 @@
+# ---- Credentials. Never commit these. ----
+kaggle.json
+.kaggle/
+*.pem
+*.key
+.env
+
+# ---- Datasets. Far too large for git, download scripts are provided instead. ----
+data/*
+!data/.gitkeep
+!data/manifests/
+# Cached feature matrices (regenerable from the manifests, tens of MB each)
+data/features/
+
+# Full dataset manifests list all 330,335 images and total ~22MB. They are
+# regenerated in seconds by `python src/data_prep.py --step inspect`, so there
+# is no reason to carry them in history. The SUBSET manifests below are what
+# actually pin the experiment and those ARE committed.
+data/manifests/*_full.csv
+*.zip
+*.tar
+*.tar.gz
+
+# ---- Trained model weights. Attached to GitHub Releases instead. ----
+models/*
+!models/.gitkeep
+*.pt
+*.pth
+*.pkl
+*.joblib
+
+# ---- Generated results. Figures are committed, raw dumps are not. ----
+results/*
+!results/.gitkeep
+!results/figures/
+!results/*.csv
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+ENV/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- Jupyter ----
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+profile_default/
+ipython_config.py
+
+# ---- IDE ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Logs / checkpoints ----
+logs/
+runs/
+*.log
+checkpoints/
