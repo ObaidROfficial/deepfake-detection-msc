@@ -32,10 +32,16 @@ large effect on what a detector actually learns.
 Generative Adversarial Networks, introduced by Goodfellow et al. (2014)
 `[VERIFY]`, train two networks against each other: a generator producing
 images and a discriminator trying to tell them from real ones. The approach
-improved rapidly and by the time of StyleGAN (Karras et al., 2019) `[VERIFY]`
-GANs could synthesise entire human faces at high resolution that most people
-cannot identify as artificial. These are *fully synthetic* images — no real
-person is depicted at all.
+improved rapidly, and by the time of StyleGAN (Karras, Laine and Aila, 2019)
+GANs could synthesise entire human faces at 1024×1024 that most people cannot
+identify as artificial. These are *fully synthetic* images — no real person is
+depicted at all. StyleGAN is directly relevant here because it produced the
+fake half of the training dataset used in this project.
+
+An architectural detail of StyleGAN matters for the results later. Like all
+current GAN architectures it builds an image by progressively **upsampling**
+from a low-resolution representation, and as section 2.4 sets out, that
+upsampling is the origin of the frequency artefacts detectors learn to exploit.
 
 A second family performs *face swapping*. Rather than generating a whole
 image, an autoencoder or similar model replaces the face region in an existing
@@ -53,32 +59,77 @@ other, even though both are labelled "fake".
 
 ## 2.3 Detection approaches
 
-Early detection work used handcrafted features. Researchers looked for
-inconsistencies a generator was likely to get wrong — irregular blinking,
-inconsistent head pose, mismatched lighting, or blending boundaries around a
-swapped face region. These methods are interpretable, which is an advantage,
-but they tend to break as generators improve and specifically address whatever
-flaw was being exploited.
+### Handcrafted features
+
+Early detection work used handcrafted features, looking for inconsistencies a
+generator was likely to get wrong — irregular blinking, inconsistent head pose,
+mismatched lighting, or visible blending boundaries around a swapped face
+region. These methods have the advantage of being interpretable: the reason for
+a decision can be stated. Their weakness is that each targets a specific flaw,
+so they degrade quickly once generators improve enough to address it. The
+history of the field is largely a sequence of such cues being identified and
+then closed.
+
+The classical computer vision descriptors used as a baseline in this project —
+Histogram of Oriented Gradients and Local Binary Patterns — belong to this
+tradition, though they are applied here as general texture and gradient
+descriptors rather than as detectors of any specific artefact.
+
+### Convolutional neural networks
 
 The field then moved almost entirely to convolutional neural networks. Rather
 than specifying what to look for, a CNN is trained end to end on labelled real
-and fake images and learns its own features. Architectures borrowed from
-general image classification — XceptionNet, ResNet, EfficientNet and
-MobileNet — have all been applied, usually initialised from ImageNet weights
-and fine-tuned. Reported accuracies on standard benchmarks are very high,
-frequently above 95%, and this is the approach adopted for the artefact in this
-project.
+and fake images and learns its own features. Architectures developed for
+general image classification are typically borrowed, initialised from ImageNet
+weights and fine-tuned on the detection task.
 
-More recently transformer architectures have been applied to the problem.
-There is some evidence that transformers generalise across datasets better
-than CNNs do `[VERIFY — a Springer paper reports ~11.3% degradation for
-transformers against >15% for CNNs, but the protocol needs checking before
-this figure is quoted]`. Transformers were not used here because of the
-CPU-only hardware constraint discussed in Chapter 3.
+Rössler et al. (2019) established XceptionNet as a strong baseline for this
+task in the FaceForensics++ paper, and it remains a common reference point.
+Reported accuracies on standard benchmarks are consistently high, frequently
+above 95%.
 
-A third strand works in the frequency domain rather than on pixels directly,
-and it is worth its own section because it explains a result found later in
-this project.
+Two architectures are used in this project, both chosen for reasons discussed
+in Chapter 4.
+
+**MobileNetV2** (Sandler et al., 2018, CVPR) is built around an inverted
+residual structure in which the input and output of each block are narrow
+bottleneck layers and the intermediate layer is an expanded representation
+filtered by lightweight depthwise convolutions. The authors also argue against
+placing non-linearities in the narrow layers, on the grounds that this destroys
+representational capacity. The practical consequence is a network with far
+fewer parameters and operations than a conventional CNN of comparable accuracy,
+which is what makes it viable on CPU.
+
+**EfficientNet-B0** (Tan and Le, 2019, ICML) introduces compound scaling:
+rather than increasing depth, width or input resolution independently, all
+three are scaled together according to a fixed ratio. The building block is a
+mobile inverted bottleneck similar to MobileNetV2's, but the network is larger.
+Its inclusion here allows an architecture comparison at matched trainable
+capacity.
+
+It is worth noting that neither architecture was designed for forensic
+analysis. Both are general-purpose classifiers, and the assumption underlying
+their use — that features learned for object recognition transfer usefully to
+detecting generator artefacts — is rarely examined explicitly in this
+literature. The results in Chapter 6 bear on that assumption.
+
+### Transformers
+
+More recently transformer architectures have been applied to the problem, and
+there is some evidence they generalise across datasets better than CNNs
+`[VERIFY — a Springer paper reports ~11.3% degradation for transformers against
+>15% for CNNs; the protocol behind those figures must be checked before they
+are quoted, since "degradation" is defined inconsistently across this
+literature]`. Transformers were not used here because of the CPU-only hardware
+constraint discussed in Chapter 3; attention over image patches is
+substantially more expensive than depthwise convolution at the resolutions
+required.
+
+### Frequency-domain approaches
+
+A third strand works in the frequency domain rather than on pixels directly. It
+is treated separately in section 2.4 because it supplies the mechanism that
+explains several of this project's results.
 
 ## 2.4 Frequency-domain artefacts
 
@@ -117,11 +168,21 @@ Yu et al. need full citations]`.
 
 Several datasets have become standard in this field.
 
-**FaceForensics++** (Rössler et al., 2019) `[VERIFY]` is the most widely used
-benchmark. It provides video sequences manipulated by several different methods
-at several compression levels, which makes it valuable for studying exactly the
-robustness questions this project is concerned with. Access requires a signed
-agreement with the hosting institution.
+**FaceForensics++** (Rössler et al., 2019) is the most widely used benchmark. It
+was presented at ICCV 2019 and provides video sequences manipulated by four
+distinct techniques — DeepFakes, Face2Face, FaceSwap and NeuralTextures — at
+several compression levels. That combination is what makes it valuable for the
+questions this project asks: it allows both cross-method and cross-compression
+evaluation within one dataset. The authors report that domain-specific
+knowledge improves detection accuracy even under strong compression, and that
+automated detectors clearly outperform human observers. Access requires a
+signed agreement with the hosting institution.
+
+It is worth being explicit that this project would have benefited from
+FaceForensics++ precisely because it varies manipulation *method* and
+compression *level* independently, which is exactly the two-factor design the
+results in Chapters 6 and 7 approximate using two separate datasets and a
+synthetic degradation suite. Chapter 3 explains why it could not be used.
 
 **The Deepfake Detection Challenge dataset** (Dolhansky et al., 2020)
 `[VERIFY]` was released by Facebook for a Kaggle competition and is very large
@@ -138,9 +199,19 @@ multiple people in unrestricted natural scenes. The authors argue this is
 substantially harder than conventional deepfake recognition. This dataset
 provides the cross-dataset evaluation set for the present project.
 
-The **Flickr-Faces-HQ (FFHQ)** dataset (Karras et al., 2019) `[VERIFY]` is not
-a deepfake dataset but supplies the real images for the training set used here,
-and is the dataset StyleGAN was trained on.
+The **Flickr-Faces-HQ (FFHQ)** dataset (Karras et al., 2019) is not a deepfake
+dataset but supplies the real images for the training set used in this project,
+and is the dataset StyleGAN was trained on. It contains 70,000 images at
+1024×1024 and was introduced alongside the StyleGAN architecture at CVPR 2019,
+offering greater variation in accessories, age, ethnicity and background than
+the CelebA-HQ dataset it largely displaced.
+
+Two properties of FFHQ matter here. Its images are **landmark-aligned**, which
+this project exploited when verifying that the two datasets do not share a
+real-image source (Chapter 5). And its stated improvement in demographic
+variation over CelebA-HQ is relative rather than absolute — it provides no
+demographic labels, which is why the demographic audit discussed in Chapter 7
+could not be performed.
 
 An observation worth making is that these datasets differ not only in
 generation method but in capture conditions, resolution, compression history
@@ -158,15 +229,26 @@ produced by a method they were not trained on. Since a real-world detector will
 inevitably encounter generation techniques that did not exist when it was
 trained, in-domain accuracy on its own is a poor indicator of practical value.
 
-Recent work has attempted to quantify this systematically. DeepfakeBench
-`[VERIFY — arXiv:2307.01426]` provides a unified benchmark allowing detectors
-to be compared under standardised conditions, which addresses a real problem in
-the literature: papers report results under differing protocols, making
-cross-paper comparison unreliable. A 2025 systematic review focusing
-specifically on model generalisation `[VERIFY — ScienceDirect
-S2543925125000075]` and a 2026 study evaluating fourteen benchmark datasets
-`[VERIFY — arXiv:2508.06248]` both indicate this remains an open problem rather
-than a solved one.
+Recent work has attempted to quantify this systematically. Yan et al. (2023)
+introduced **DeepfakeBench**, which they describe as the first comprehensive
+benchmark for the field, integrating 15 detection methods and 9 datasets behind
+a unified data-management system with standardised evaluation protocols. Their
+motivation is worth quoting in substance: they argue that the absence of a
+standardised benchmark leads to *"unfair performance comparisons and
+potentially misleading results"*, because data-processing pipelines, experimental
+settings and evaluation metrics all differ between papers.
+
+This is a significant observation for the present project, and it cuts two
+ways. It means published accuracy figures cannot be compared across papers with
+confidence, which is part of why this dissertation evaluates all of its own
+models under one fixed protocol rather than quoting numbers from elsewhere. It
+also means the ~97% figures commonly cited for the dataset used here should be
+treated as indicative rather than as a precise target.
+
+A 2025 systematic review focusing specifically on model generalisation
+`[VERIFY — ScienceDirect S2543925125000075]` and a 2026 study evaluating
+fourteen benchmark datasets `[VERIFY — arXiv:2508.06248]` both indicate this
+remains an open problem rather than a solved one.
 
 The explanations offered generally reduce to the same idea: detectors learn
 artefacts specific to the generator in their training data rather than any
@@ -193,13 +275,27 @@ specifically to discard high-frequency information as perceptually
 unimportant, there is a direct conflict between how images are distributed and
 how detectors work.
 
-An analysis of recent advances in deepfake detection presented at IEEE
-Security and Privacy 2024 `[VERIFY — arXiv:2404.16212]` observes that most
-detection papers conduct only basic robustness evaluation — typically blurring,
-JPEG compression, downsampling and noise — and that even state-of-the-art
-detectors show significant drops on compressed or resized inputs relative to
-pristine ones. This both justifies including such a suite in the present
-project and suggests going beyond it.
+An analysis of recent advances in deepfake detection presented at IEEE Security
+and Privacy 2024 examines eight state-of-the-art detectors and argues they are
+"far from being ready for deployment". Two developments drive that conclusion.
+Lightweight methods for customising large generative models let an attacker
+produce many bespoke generators, and the authors show existing defences fail to
+generalise well to such user-customised models. Separately, vision foundation
+models can be misused to craft adversarial deepfakes; they demonstrate an attack
+that evades defences **without adding any adversarial noise**, instead
+manipulating image content semantically.
+
+The first point reinforces the case for cross-dataset evaluation: if the number
+of distinct generators in circulation is growing rapidly, in-domain accuracy
+becomes an ever weaker proxy for deployed performance.
+
+The second sets a limit on this project's own adversarial testing that should
+be stated plainly. FGSM, used in Chapter 6, perturbs pixels within a small norm
+budget. An attack operating through semantic manipulation rather than additive
+noise would not be captured by any measure used here, and would not be
+addressed by the adversarial training suggested as further work in Chapter 8.
+The adversarial results in this dissertation are therefore a lower bound on
+vulnerability rather than a full characterisation of it.
 
 The second threat is deliberate adversarial attack. Work presented at WACV 2021
 `[VERIFY]` demonstrated that deepfake detectors can be defeated by adversarially
@@ -260,13 +356,37 @@ in full:
 
 | Source | Status |
 |---|---|
-| Frank et al. (2020), *Leveraging Frequency Analysis for Deep Fake Image Recognition*, ICML 2020, arXiv:2003.08685 | **Verified** — upsampling claim confirmed from the paper |
-| Le et al. (2021), *OpenForensics*, ICCV 2021, arXiv:2107.14480 | **Verified** — in-the-wild multi-face framing confirmed |
+| Frank, J., Eisenhofer, T., Schönherr, L., Fischer, A., Kolossa, D. and Holz, T. (2020) *Leveraging Frequency Analysis for Deep Fake Image Recognition*. ICML 2020. arXiv:2003.08685 | **Verified** — upsampling claim confirmed from the paper |
+| Le, T.-N., Nguyen, H.H., Yamagishi, J. and Echizen, I. (2021) *OpenForensics: Large-Scale Challenging Dataset For Multi-Face Forgery Detection And Segmentation In-The-Wild*. ICCV 2021. arXiv:2107.14480 | **Verified** — in-the-wild multi-face framing confirmed |
+| Rössler, A., Cozzolino, D., Verdoliva, L., Riess, C., Thies, J. and Nießner, M. (2019) *FaceForensics++: Learning to Detect Manipulated Facial Images*. ICCV 2019, Seoul. arXiv:1901.08971 | **Verified** — authors, venue, four manipulation methods, compression levels |
+| Karras, T., Laine, S. and Aila, T. (2019) *A Style-Based Generator Architecture for Generative Adversarial Networks*. CVPR 2019, pp. 4401–4410 | **Verified** — authors, venue, pages; FFHQ 70k at 1024×1024 |
+| Yan, Z., Zhang, Y., Yuan, X., Lyu, S. and Wu, B. (2023) *DeepfakeBench: A Comprehensive Benchmark of Deepfake Detection*. arXiv:2307.01426 | **Verified** — authors, 15 methods / 9 datasets, "unfair performance comparisons" claim |
+| Sandler, M., Howard, A., Zhu, M., Zhmoginov, A. and Chen, L.-C. (2018) *MobileNetV2: Inverted Residuals and Linear Bottlenecks*. CVPR 2018, pp. 4510–4520 | **Verified** — authors, venue, pages; inverted residual / linear bottleneck claims |
+| Tan, M. and Le, Q.V. (2019) *EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks*. ICML 2019, pp. 6105–6114 | **Verified** — authors, venue, pages; compound scaling |
+| *An Analysis of Recent Advances in Deepfake Image Detection in an Evolving Threat Landscape*. IEEE S&P 2024. arXiv:2404.16212 | **Verified** — 8 detectors, user-customised generators, no-noise semantic attack. **Author list still to be confirmed** |
 
 All others are currently based on search results or general knowledge and
 **must not go into the submitted reference list until the paper has been
 opened and checked**. Lesson 5 warns specifically about reference lists that
 appear assembled rather than read, and the Documentation criterion is worth 10%.
+
+### Still outstanding
+
+| Source | Needed for |
+|---|---|
+| Source | Needed for | Priority |
+|---|---|---|
+| Goodfellow et al. (2014), *Generative Adversarial Nets*, NeurIPS | §2.2 | High — foundational, cited in the proposal |
+| Dolhansky et al. (2020), DFDC dataset | §2.5 + Ch3 deviation argument | High — the deviation rests on it |
+| Li et al. (2020), Celeb-DF | §2.5 | Medium |
+| arXiv:2508.06248, *Deepfake Detection that Generalizes Across Benchmarks* | §2.6 | Medium |
+| ScienceDirect S2543925125000075, systematic review on generalisation | §2.6 | Medium |
+| Springer 10.1007/s00138-026-01809-w, transformer vs CNN | §2.3 | **Care needed — verify the protocol before quoting 11.3% / 15%** |
+| WACV 2021, *Adversarial Deepfakes* | §2.7 | Medium |
+| ACM DTRAP 10.1145/3464307, robust attacks on detectors | §2.7 | Medium — ACM venue, good for the professional-body requirement |
+| Yu et al., GAN fingerprints; GANprintR | §2.4 | Low — need full citations before use |
+| arXiv:2210.14571, diffusion model detection | §2.4 + Ch7 limitation | Medium |
+| Xception / MobileNetV2 / EfficientNet original papers | §2.3, Ch4 justification | High — architectures are used, should be cited |
 
 ### Next actions
 

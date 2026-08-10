@@ -107,10 +107,27 @@ pair. A three- or four-way matrix would establish whether the effect is general
 or specific to this pair of manipulation types. As it stands the finding is
 suggestive rather than conclusive.
 
-**Both datasets are GAN-era.** Diffusion models are displacing GANs for image
-synthesis, and nothing here speaks to whether these conclusions hold for
-diffusion-generated content. Given the mechanism identified is specific to GAN
-upsampling, there is reason to expect they may not.
+**Both datasets are GAN-era, and this limitation is sharper than it first
+appears.** GANs construct images by repeatedly upsampling, and Frank et al.
+(2020) identified that upsampling as the source of the artefacts detectors
+exploit. Diffusion models generate by iterative denoising instead, so that
+artefact family is largely absent. The better this model becomes at finding GAN
+upsampling traces, the less reason there is to expect it to find anything in a
+diffusion image.
+
+Testing during development bore this out: a visibly synthetic
+diffusion-generated portrait was classified **REAL with reported confidence of
+100%**, even after the face was correctly detected and cropped (§5.7). This is
+consistent with the cross-dataset result rather than separate from it — Dataset
+B was a different manipulation method within the same generative family, so a
+larger failure across families is what the account predicts.
+
+The more troubling aspect is the confidence. The model reported certainty on an
+input it had no basis for judging. A softmax output from a cross-entropy-trained
+network is not a probability of being correct, and here it was actively
+misleading. A user without this report would have received an unambiguous,
+confident, wrong answer — which is precisely the failure mode Chapter 8 argues
+is worse than no detector at all.
 
 **Deviation from the proposal.** The project specified FaceForensics++ and the
 DFDC corpus. Neither was usable: FF++ requires a signed licence agreement with

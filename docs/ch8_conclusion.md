@@ -137,23 +137,22 @@ silently returns "real" when it has no evidence either way.
 
 ## 8.6 Entrepreneurial and practical potential
 
-The artefact is a research prototype, not a product, and the honest assessment
-is that its cross-dataset and adversarial results argue against deploying this
-class of detector as a standalone authenticity verdict.
+The artefact is a research prototype, and the honest assessment is that its
+cross-dataset and adversarial results argue against deploying this class of
+detector as a standalone authenticity verdict.
 
-Where there is potential is in the evaluation methodology rather than the
-model. Organisations procuring detection tools are generally shown in-domain
-benchmark figures. A standardised harness that reports cross-method transfer,
-degradation curves and adversarial robustness alongside headline accuracy would
-let buyers see the operating envelope rather than the best case. The finding
-that a 94.3% detector delivers roughly 56% on a thumbnail-resized image is
-exactly the kind of information that should inform procurement and does not
-currently appear on a specification sheet.
+The potential lies in the evaluation methodology rather than the model.
+Organisations procuring detection tools are generally shown in-domain benchmark
+figures. A standardised harness reporting cross-method transfer, degradation
+curves and adversarial robustness alongside headline accuracy would let buyers
+see the operating envelope rather than the best case. That a 94.3% detector
+delivers roughly 56% on a thumbnail-resized image is exactly the kind of
+information that should inform procurement and does not appear on any
+specification sheet.
 
 More broadly, the results support the view that provenance-based approaches —
-cryptographic signing and content credentials at capture — are likely to prove
-more durable than artefact-based detection, which is structurally always one
-generator behind.
+cryptographic signing at capture — are likely to prove more durable than
+artefact-based detection, which is structurally always one generator behind.
 
 ---
 

@@ -45,3 +45,8 @@ kaggle>=1.6.0
 # --- Notebooks ---
 jupyterlab>=4.1.0
 ipywidgets>=8.1.0
+
+# --- Graphical interface (app.py) ---
+# Only needed to run the GUI. The command line tool src/predict.py and all
+# experiment scripts work without it.
+gradio>=4.44.0

@@ -132,9 +132,68 @@ points**.
 
 ---
 
+## Install and run
+
+**Windows**
+
+```powershell
+git clone https://github.com/ObaidROfficial/deepfake-detection-msc.git
+cd deepfake-detection-msc
+.\setup.ps1
+```
+
+**macOS / Linux**
+
+```bash
+git clone https://github.com/ObaidROfficial/deepfake-detection-msc.git
+cd deepfake-detection-msc
+chmod +x setup.sh && ./setup.sh
+```
+
+That creates a virtual environment, installs the CPU build of PyTorch and all
+dependencies, downloads the trained weights from Releases, and verifies the
+install. Add `-Minimal` (Windows) or `--minimal` (Unix) to install only what
+the demo needs, skipping the experiment dependencies.
+
+Then:
+
+```powershell
+.\venv\Scripts\Activate.ps1     # source venv/bin/activate on macOS/Linux
+python app.py                   # graphical interface at http://127.0.0.1:7860
+```
+
+## Try it on your own image
+
+```powershell
+python src\predict.py --image your_photo.jpg
+```
+
+```
+  your_photo.jpg
+    verdict     : FAKE
+    P(fake)     : 0.9871
+    confidence  : high
+```
+
+No datasets or Kaggle account needed. `predict.py` also accepts `--folder` for
+batch classification and `--csv` to write results out.
+
+The tool warns when an input falls outside the conditions the model was
+validated on, and every run prints a summary of where the detector is known to
+fail. That is deliberate rather than decorative — see the results below.
+
+## For markers and reviewers
+
+**See [REPRODUCE.md](REPRODUCE.md).** Four paths depending on available time:
+inspect the committed results (~1 min), run the detector on your own images
+(~5 min), re-verify every reported number from the released weights (~50 min),
+or rebuild everything from scratch (~8 h). No GPU needed for any of them.
+
+---
+
 ## Quick start
 
-Full instructions in **[SETUP.md](SETUP.md)**. Short version:
+Full installation instructions in **[SETUP.md](SETUP.md)**. Short version:
 
 ```powershell
 python -m venv venv

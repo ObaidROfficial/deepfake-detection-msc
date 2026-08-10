@@ -3,7 +3,7 @@
 > **DRAFT v1 — 11 August 2026.** Target 1,900 words.
 > Lesson 3 requires this chapter to reflect on problems experienced during
 > implementation and on how the chosen methodology affected the artefact.
-> Section 5.6 does that at length.
+> Section 5.7 does that at length.
 
 ---
 
@@ -106,19 +106,42 @@ the most recent epoch. The resume path reconstructs the optimiser at the correct
 stage — verified by simulating resume from several epochs and confirming the
 optimiser rebuilds at the right boundaries.
 
-## 5.5 Robustness implementation
+## 5.5 Demonstration tools
+
+Two entry points let the trained model be used rather than only measured.
+
+`src/predict.py` is a command line tool taking a single image or a folder and
+reporting a verdict with confidence. `app.py` is a Gradio web interface with
+drag-and-drop upload, a progress indicator and a probability display. The
+interface imports its inference logic from `predict.py` rather than
+reimplementing it, so a preprocessing difference between them cannot arise
+silently — a mismatch there would give different answers for the same image.
+
+Both apply face detection before classification, warn when an input falls
+outside the conditions the model was validated on, and cite the measured
+accuracy for that condition rather than issuing a generic caution. Both also
+carry a standing notice that diffusion-generated images are out of scope.
+
+That last decision follows from the argument in Chapter 8 that a detector which
+silently fails while appearing to work is worse than no detector, because it
+confers unwarranted confidence. Applying that conclusion to the project's own
+deliverable seemed the minimum consistency required. `src/make_demo_samples.py`
+extracts a small set of held-out test images for demonstration, deliberately
+gitignored since the project does not redistribute dataset content.
+
+## 5.6 Robustness implementation
 
 Perturbations are implemented as classes with `__call__` rather than closures.
-This was not a stylistic choice; the reason is in section 5.6.
+This was not a stylistic choice; the reason is in section 5.7.
 
 FGSM required care with normalisation. Inputs reaching the model are already
 ImageNet-normalised, but epsilon is meaningful in [0,1] pixel space, so the
 perturbation is divided by the per-channel standard deviation to keep epsilon
 interpretable as a fraction of the pixel range.
 
-## 5.6 Problems encountered
+## 5.7 Problems encountered
 
-Ten defects or misjudgements are recorded here. They are included because
+Twelve defects or misjudgements are recorded here. They are included because
 Lesson 3 requires reflection on implementation problems, and because several
 of them shaped the results.
 
@@ -197,13 +220,32 @@ actual robustness — the known label-leaking effect. Changed to use the model's
 own predicted label, the realistic threat model. Accuracy became 0.0520. The
 correction changed the number, not the conclusion.
 
+**11. The demonstration tool applied the model to inputs it could not handle.**
+Testing `predict.py` on an arbitrary photograph exposed a preprocessing gap the
+experiments never encountered, because every dataset image is already a 256×256
+face crop. A 768×1232 portrait was classified REAL with 100% reported
+confidence. Two faults combined: the evaluation transform resizes to a square,
+squashing a 1.6:1 portrait vertically, and the face occupied roughly a fifth of
+the frame, so at 224×224 the model saw a face about 49 pixels across surrounded
+by clothing and background it had never been trained on.
+
+Fixed by detecting and cropping to the largest face first, using OpenCV's Haar
+cascade, and by warning on aspect ratios beyond 1.35:1. The interface also
+displays the cropped region so the user can see what was actually classified.
+
+**12. The out-of-range warnings described the wrong image.** After adding face
+cropping, the resolution check still ran against the original upload — a large
+photograph passed every check while the face within it cropped to 149×149 and
+was upscaled to 224, precisely the condition the warning exists to flag.
+Reordered so inspection runs on the region actually fed to the model.
+
 Two smaller issues were also fixed: skimage warned that LBP on floating-point
 images can behave unpredictably where adjacent pixels are near-equal, resolved
 by computing LBP on `uint8`; and the robustness plotting grid was hardcoded at
 2×3, which would have silently dropped two families once FGSM was split into
 two label regimes.
 
-## 5.7 Reflection on the methodology
+## 5.8 Reflection on the methodology
 
 The iterative approach was directly responsible for several of the above being
 caught. Items 6, 7 and 10 were each found by examining a result that looked
