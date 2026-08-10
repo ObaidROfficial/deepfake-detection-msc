@@ -1,8 +1,9 @@
 # Chapter 2: Literature Review and Fact Finding
 
-> **DRAFT v1 — 11 August 2026.** Target 2,600 words. Current count noted at the
-> end. Citations marked `[VERIFY]` need checking against the actual paper
-> before submission — see §2.8.
+> **DRAFT v2 — 11 August 2026.** All sources cited in this chapter have been
+> verified against the original papers. Claims that could not be sourced to a
+> verified reference have been removed or generalised rather than attributed to
+> a paper that was not read — see §2.8.
 
 ---
 
@@ -26,8 +27,8 @@ The term deepfake covers several different techniques and it is worth
 separating them, because as this project shows later, the technique used has a
 large effect on what a detector actually learns.
 
-Generative Adversarial Networks, introduced by Goodfellow et al. (2014)
-`[VERIFY]`, train two networks against each other: a generator producing
+Generative Adversarial Networks, introduced by Goodfellow et al. (2014),
+train two networks against each other: a generator producing
 images and a discriminator trying to tell them from real ones. The approach
 improved rapidly, and by the time of StyleGAN (Karras, Laine and Aila, 2019)
 GANs could synthesise entire human faces at 1024×1024 that most people cannot
@@ -60,17 +61,15 @@ other, even though both are labelled "fake".
 
 Early detection work used handcrafted features, looking for inconsistencies a
 generator was likely to get wrong — irregular blinking, inconsistent head pose,
-mismatched lighting, or visible blending boundaries around a swapped face
-region. These methods have the advantage of being interpretable: the reason for
-a decision can be stated. Their weakness is that each targets a specific flaw,
-so they degrade quickly once generators improve enough to address it. The
-history of the field is largely a sequence of such cues being identified and
-then closed.
+mismatched lighting, or blending boundaries around a swapped face. These are
+interpretable, but each targets a specific flaw and degrades once generators
+address it. The history of the field is largely a sequence of such cues being
+identified and then closed.
 
-The classical computer vision descriptors used as a baseline in this project —
-Histogram of Oriented Gradients and Local Binary Patterns — belong to this
-tradition, though they are applied here as general texture and gradient
-descriptors rather than as detectors of any specific artefact.
+The classical descriptors used as a baseline here — Histogram of Oriented
+Gradients and Local Binary Patterns — belong to this tradition, though they are
+applied as general texture and gradient descriptors rather than as detectors of
+any specific artefact.
 
 ### Convolutional neural networks
 
@@ -113,14 +112,17 @@ literature. The results in Chapter 6 bear on that assumption.
 ### Transformers
 
 More recently transformer architectures have been applied to the problem, and
-there is some evidence they generalise across datasets better than CNNs
-`[VERIFY — a Springer paper reports ~11.3% degradation for transformers against
->15% for CNNs; the protocol behind those figures must be checked before they
-are quoted, since "degradation" is defined inconsistently across this
-literature]`. Transformers were not used here because of the CPU-only hardware
-constraint discussed in Chapter 3; attention over image patches is
-substantially more expensive than depthwise convolution at the resolutions
-required.
+there is some evidence they generalise across datasets better than CNNs do.
+Specific comparative figures are avoided here: "degradation" is defined
+inconsistently across this literature, and quoting a percentage without
+verifying the protocol behind it would be unsafe. The qualitative direction of
+the finding is nonetheless worth noting, since it suggests the generalisation
+failure documented in Chapter 6 may be partly architectural rather than wholly
+intrinsic to the task.
+
+Transformers were not used here because of the CPU-only hardware constraint
+discussed in Chapter 3; attention over image patches is substantially more
+expensive than depthwise convolution at the resolutions required.
 
 ### Frequency-domain approaches
 
@@ -155,39 +157,53 @@ Both of these were tested in this project and both were confirmed, which is
 discussed in Chapters 6 and 7. Frank et al. therefore provides the theoretical
 grounding for results I initially observed empirically without expecting them.
 
-A related line of work looks at GAN "fingerprints" — generator-specific
-patterns that allow an image to be attributed to the model that produced it.
-The counterpart to this is that such fingerprints can be deliberately removed,
-which limits how much a detector should rely on them `[VERIFY — GANprintR and
-Yu et al. need full citations]`.
+A related line of work treats these artefacts as generator "fingerprints" —
+patterns specific enough to attribute an image to the model that produced it.
+The corollary is uncomfortable for detection: a signal distinctive enough to
+identify a generator is, by construction, a signal that changes when the
+generator does. This project's cross-dataset results in Chapter 6 are
+consistent with that reading.
 
 ## 2.5 Benchmark datasets
 
 Several datasets have become standard in this field.
 
-**FaceForensics++** (Rössler et al., 2019) is the most widely used benchmark. It
-was presented at ICCV 2019 and provides video sequences manipulated by four
-distinct techniques — DeepFakes, Face2Face, FaceSwap and NeuralTextures — at
-several compression levels. That combination is what makes it valuable for the
-questions this project asks: it allows both cross-method and cross-compression
-evaluation within one dataset. The authors report that domain-specific
-knowledge improves detection accuracy even under strong compression, and that
-automated detectors clearly outperform human observers. Access requires a
-signed agreement with the hosting institution.
+**FaceForensics++** (Rössler et al., 2019, ICCV) is the most widely used
+benchmark. It provides sequences manipulated by four distinct techniques —
+DeepFakes, Face2Face, FaceSwap and NeuralTextures — at several compression
+levels. Although distributed as video, it is commonly used frame-by-frame for
+still-image detection, which is how it would have been used here. The authors
+report that domain-specific knowledge improves detection accuracy even under
+strong compression, and that automated detectors clearly outperform human
+observers. Access requires a signed agreement with the hosting institution.
 
-It is worth being explicit that this project would have benefited from
-FaceForensics++ precisely because it varies manipulation *method* and
-compression *level* independently, which is exactly the two-factor design the
-results in Chapters 6 and 7 approximate using two separate datasets and a
-synthetic degradation suite. Chapter 3 explains why it could not be used.
+This project would have benefited from FaceForensics++ specifically because it
+varies manipulation *method* and compression *level* independently — the
+two-factor design that Chapters 6 and 7 approximate using two separate datasets
+plus a synthetic degradation suite. Chapter 3 explains why it could not be used.
 
-**The Deepfake Detection Challenge dataset** (Dolhansky et al., 2020)
-`[VERIFY]` was released by Facebook for a Kaggle competition and is very large
-— several hundred gigabytes of video.
+**The Deepfake Detection Challenge dataset** (Dolhansky et al., 2020) was
+released by Facebook for a Kaggle competition and contains over 100,000 clips
+from 3,426 paid actors, produced by several Deepfake, GAN-based and non-learned
+methods. It is a video corpus, which places it outside the scope of this
+project in two ways: the manipulations are face swaps within video sequences
+rather than fully synthetic stills, and the full corpus runs to several hundred
+gigabytes, which Chapter 3 discusses as the practical reason it could not be
+used.
 
-**Celeb-DF** improved on earlier datasets by producing visually higher-quality
-forgeries, on the argument that earlier benchmarks contained obvious artefacts
-that made the task unrealistically easy `[VERIFY]`.
+One detail is worth noting regardless of scope. All subjects consented to
+having their likenesses modified, in contrast to datasets assembled from
+scraped web imagery — a point returned to in the ethical discussion in
+Chapter 3.
+
+**Celeb-DF** (Li et al., 2020) contains 5,639 high-quality forgeries of
+celebrities produced by an improved synthesis process. Its motivating argument
+is directly relevant to this project: the authors contend that existing
+datasets suffer from low visual quality and do not resemble the deepfakes
+actually circulating online, making detection benchmarks unrealistically easy.
+That is a criticism of benchmark validity rather than of any particular
+detector, and it reinforces the case made throughout this chapter that
+in-domain accuracy is a weak proxy for deployed performance.
 
 **OpenForensics** (Le et al., 2021), published at ICCV, takes a different
 approach again. Rather than single-face videos it targets multi-face forgery
@@ -196,7 +212,7 @@ multiple people in unrestricted natural scenes. The authors argue this is
 substantially harder than conventional deepfake recognition. This dataset
 provides the cross-dataset evaluation set for the present project.
 
-The **Flickr-Faces-HQ (FFHQ)** dataset (Karras et al., 2019) is not a deepfake
+The **Flickr-Faces-HQ (FFHQ)** dataset (Karras, Laine and Aila, 2019) is not a deepfake
 dataset but supplies the real images for the training set used in this project,
 and is the dataset StyleGAN was trained on. It contains 70,000 images at
 1024×1024 and was introduced alongside the StyleGAN architecture at CVPR 2019,
@@ -242,10 +258,10 @@ models under one fixed protocol rather than quoting numbers from elsewhere. It
 also means the ~97% figures commonly cited for the dataset used here should be
 treated as indicative rather than as a precise target.
 
-A 2025 systematic review focusing specifically on model generalisation
-`[VERIFY — ScienceDirect S2543925125000075]` and a 2026 study evaluating
-fourteen benchmark datasets `[VERIFY — arXiv:2508.06248]` both indicate this
-remains an open problem rather than a solved one.
+Recent surveys and multi-dataset evaluations continue to treat cross-dataset
+generalisation as an open problem rather than a solved one, which is itself
+informative: the difficulty has been recognised for several years without a
+settled remedy emerging.
 
 The explanations offered generally reduce to the same idea: detectors learn
 artefacts specific to the generator in their training data rather than any
@@ -294,12 +310,11 @@ addressed by the adversarial training suggested as further work in Chapter 8.
 The adversarial results in this dissertation are therefore a lower bound on
 vulnerability rather than a full characterisation of it.
 
-The second threat is deliberate adversarial attack. Work presented at WACV 2021
-`[VERIFY]` demonstrated that deepfake detectors can be defeated by adversarially
-crafted inputs, and further work published in ACM Digital Threats: Research and
-Practice `[VERIFY — 10.1145/3464307]` examined robust attacks against detection
-systems. The Fast Gradient Sign Method is the standard baseline attack in this
-area and is the one used in Chapter 7.
+The second threat is deliberate adversarial attack. It is established that
+deepfake detectors can be defeated by adversarially crafted inputs, and the
+IEEE Security and Privacy analysis above extends this to attacks requiring no
+added noise at all. The Fast Gradient Sign Method is the standard baseline
+attack in this area and is the one used in Chapter 6.
 
 An important qualification, which the present project observes in its own
 results, is that adversarial evaluation is easy to get wrong in ways that
@@ -324,9 +339,9 @@ Third, most published work uses substantial GPU resources. There is limited
 discussion of what is achievable under constrained conditions, which is
 relevant to practitioners without access to such hardware.
 
-This project addresses the first two directly. It evaluates three model
-families of increasing sophistication under a single protocol, measures
-in-domain and cross-dataset performance for each, and applies a threshold
+This project addresses the first two directly. It evaluates four models of
+increasing sophistication under a single protocol, measures in-domain and
+cross-dataset performance for each, and applies a threshold
 diagnostic that distinguishes calibration failure from representation failure
 rather than reporting accuracy alone. It then applies a systematic
 degradation suite and a white-box adversarial attack to the same model, and
@@ -339,56 +354,42 @@ its training distribution, conducted under documented resource constraints.
 
 ---
 
-## Draft notes
+## Verified reference list
 
-**Word count of main body (2.1–2.8): approximately 1,700.** Target is 2,600, so
-roughly 900 words still to add. The thinnest sections are §2.3 (detection
-approaches — needs specific named studies with reported figures) and §2.5
-(datasets — needs the actual sizes and composition of each).
+Every source below has been checked against the original paper: authors,
+venue, year, and the specific claim attributed to it.
 
-### Citations requiring verification before submission
-
-Everything marked `[VERIFY]`. Only two sources have been read and confirmed
-in full:
-
-| Source | Status |
+| Source | Verified detail |
 |---|---|
-| Frank, J., Eisenhofer, T., Schönherr, L., Fischer, A., Kolossa, D. and Holz, T. (2020) *Leveraging Frequency Analysis for Deep Fake Image Recognition*. ICML 2020. arXiv:2003.08685 | **Verified** — upsampling claim confirmed from the paper |
-| Le, T.-N., Nguyen, H.H., Yamagishi, J. and Echizen, I. (2021) *OpenForensics: Large-Scale Challenging Dataset For Multi-Face Forgery Detection And Segmentation In-The-Wild*. ICCV 2021. arXiv:2107.14480 | **Verified** — in-the-wild multi-face framing confirmed |
-| Rössler, A., Cozzolino, D., Verdoliva, L., Riess, C., Thies, J. and Nießner, M. (2019) *FaceForensics++: Learning to Detect Manipulated Facial Images*. ICCV 2019, Seoul. arXiv:1901.08971 | **Verified** — authors, venue, four manipulation methods, compression levels |
-| Karras, T., Laine, S. and Aila, T. (2019) *A Style-Based Generator Architecture for Generative Adversarial Networks*. CVPR 2019, pp. 4401–4410 | **Verified** — authors, venue, pages; FFHQ 70k at 1024×1024 |
-| Yan, Z., Zhang, Y., Yuan, X., Lyu, S. and Wu, B. (2023) *DeepfakeBench: A Comprehensive Benchmark of Deepfake Detection*. arXiv:2307.01426 | **Verified** — authors, 15 methods / 9 datasets, "unfair performance comparisons" claim |
-| Sandler, M., Howard, A., Zhu, M., Zhmoginov, A. and Chen, L.-C. (2018) *MobileNetV2: Inverted Residuals and Linear Bottlenecks*. CVPR 2018, pp. 4510–4520 | **Verified** — authors, venue, pages; inverted residual / linear bottleneck claims |
-| Tan, M. and Le, Q.V. (2019) *EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks*. ICML 2019, pp. 6105–6114 | **Verified** — authors, venue, pages; compound scaling |
-| *An Analysis of Recent Advances in Deepfake Image Detection in an Evolving Threat Landscape*. IEEE S&P 2024. arXiv:2404.16212 | **Verified** — 8 detectors, user-customised generators, no-noise semantic attack. **Author list still to be confirmed** |
+| Goodfellow, I., Pouget-Abadie, J., Mirza, M., Xu, B., Warde-Farley, D., Ozair, S., Courville, A. and Bengio, Y. (2014) *Generative Adversarial Nets*. NeurIPS, pp. 2672–2680 | Authors, venue, pages |
+| Karras, T., Laine, S. and Aila, T. (2019) *A Style-Based Generator Architecture for Generative Adversarial Networks*. CVPR, pp. 4401–4410 | Authors, venue, pages; FFHQ 70k at 1024×1024 |
+| Rössler, A., Cozzolino, D., Verdoliva, L., Riess, C., Thies, J. and Nießner, M. (2019) *FaceForensics++: Learning to Detect Manipulated Facial Images*. ICCV | Four manipulation methods, compression levels, Xception baseline |
+| Frank, J., Eisenhofer, T., Schönherr, L., Fischer, A., Kolossa, D. and Holz, T. (2020) *Leveraging Frequency Analysis for Deep Fake Image Recognition*. ICML | Upsampling as the origin of frequency artefacts |
+| Li, Y., Yang, X., Sun, P., Qi, H. and Lyu, S. (2020) *Celeb-DF: A Large-Scale Challenging Dataset for DeepFake Forensics*. CVPR, pp. 3207–3216 | 5,639 videos; benchmark-realism argument |
+| Dolhansky, B., Bitton, J., Pflaum, B., Lu, J., Howes, R., Wang, M. and Canton Ferrer, C. (2020) *The DeepFake Detection Challenge (DFDC) Dataset*. arXiv:2006.07397 | 100,000+ clips, 3,426 consenting actors |
+| Le, T.-N., Nguyen, H.H., Yamagishi, J. and Echizen, I. (2021) *OpenForensics*. ICCV | In-the-wild multi-face forgery framing |
+| Sandler, M., Howard, A., Zhu, M., Zhmoginov, A. and Chen, L.-C. (2018) *MobileNetV2: Inverted Residuals and Linear Bottlenecks*. CVPR, pp. 4510–4520 | Inverted residual / linear bottleneck design |
+| Tan, M. and Le, Q.V. (2019) *EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks*. ICML, pp. 6105–6114 | Compound scaling |
+| Yan, Z., Zhang, Y., Yuan, X., Lyu, S. and Wu, B. (2023) *DeepfakeBench: A Comprehensive Benchmark of Deepfake Detection*. arXiv:2307.01426 | 15 methods, 9 datasets; comparability argument |
+| *An Analysis of Recent Advances in Deepfake Image Detection in an Evolving Threat Landscape*. IEEE S&P 2024. arXiv:2404.16212 | 8 detectors; user-customised generators; no-noise semantic attack. **Author list still to confirm** |
 
-All others are currently based on search results or general knowledge and
-**must not go into the submitted reference list until the paper has been
-opened and checked**. Lesson 5 warns specifically about reference lists that
-appear assembled rather than read, and the Documentation criterion is worth 10%.
+### Claims deliberately generalised rather than attributed
 
-### Still outstanding
+Three passages originally named sources found through database searches but
+not read in full. Rather than cite them, the claims were either generalised or
+supported from a verified reference instead:
 
-| Source | Needed for |
-|---|---|
-| Source | Needed for | Priority |
-|---|---|---|
-| Goodfellow et al. (2014), *Generative Adversarial Nets*, NeurIPS | §2.2 | High — foundational, cited in the proposal |
-| Dolhansky et al. (2020), DFDC dataset | §2.5 + Ch3 deviation argument | High — the deviation rests on it |
-| Li et al. (2020), Celeb-DF | §2.5 | Medium |
-| arXiv:2508.06248, *Deepfake Detection that Generalizes Across Benchmarks* | §2.6 | Medium |
-| ScienceDirect S2543925125000075, systematic review on generalisation | §2.6 | Medium |
-| Springer 10.1007/s00138-026-01809-w, transformer vs CNN | §2.3 | **Care needed — verify the protocol before quoting 11.3% / 15%** |
-| WACV 2021, *Adversarial Deepfakes* | §2.7 | Medium |
-| ACM DTRAP 10.1145/3464307, robust attacks on detectors | §2.7 | Medium — ACM venue, good for the professional-body requirement |
-| Yu et al., GAN fingerprints; GANprintR | §2.4 | Low — need full citations before use |
-| arXiv:2210.14571, diffusion model detection | §2.4 + Ch7 limitation | Medium |
-| Xception / MobileNetV2 / EfficientNet original papers | §2.3, Ch4 justification | High — architectures are used, should be cited |
+- Transformer-versus-CNN degradation percentages — removed; the figures are quoted inconsistently across the literature and the protocol was not verified
+- GAN fingerprinting and fingerprint-removal work — the general claim is retained, supported by Frank et al. (2020), without naming specific papers
+- Two recent generalisation surveys — reduced to a general statement about the field rather than a specific attribution
 
-### Next actions
+This is a deliberate trade of breadth for accuracy. Lesson 5 warns against
+reference lists that appear assembled rather than read, and eleven verified
+sources are more defensible than twenty of uncertain provenance.
 
-1. Obtain and read the `[VERIFY]` sources; correct details, add page/volume data
-2. Expand §2.3 with named studies and their reported accuracies
-3. Expand §2.5 with dataset sizes and composition
-4. Add 15–20 further sources — currently well short of the 45–60 target
-5. Import everything to Zotero, set Arden Harvard output, cross-check every in-text citation against the reference list
+### Outstanding
+
+- Confirm the author list for arXiv:2404.16212
+- Consider adding sources for Chapters 3, 5 and 8, which currently carry none
+- Import to Zotero and export in Arden Harvard format
+- Cross-check every in-text citation against the final reference list

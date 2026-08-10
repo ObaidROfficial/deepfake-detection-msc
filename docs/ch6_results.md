@@ -92,9 +92,10 @@ images from real photographs are concentrated in the high-frequency band and
 arise from the upsampling operations used in generator architectures. Halving
 the resolution removes precisely that information.
 
-This result also generated a prediction about robustness which is tested in
-section 6.5, and I note it here because the prediction was recorded before that
-suite was run rather than fitted afterwards.
+It is worth being clear about the direction of inference. Frank et al. were not
+consulted in order to explain this result after the fact; the result was
+obtained first, and their account was then found to predict it. Section 6.5
+tests a further prediction derived from the same mechanism.
 
 ## 6.3 Cross-dataset results
 

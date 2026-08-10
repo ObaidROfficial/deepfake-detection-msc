@@ -348,6 +348,43 @@ the most likely cause.
 
 ---
 
+## Removing it afterwards
+
+Almost everything lives inside the project folder, so deleting that folder
+removes the virtual environment, the datasets, the cached features, the model
+weights and the generated figures in one go:
+
+```bash
+cd ..
+rm -rf deepfake-detection-msc          # Windows: Remove-Item -Recurse -Force
+```
+
+Three things are written **outside** the project folder and survive that:
+
+| Path | What | Size |
+|---|---|---|
+| `~/.cache/torch/hub/checkpoints` | ImageNet weights torchvision downloads on first use | ~35 MB |
+| `~/.cache/huggingface` | pulled in by Gradio's dependencies | varies |
+| `~/.kaggle/kaggle.json` | only if you created it for the datasets | 1 KB |
+
+An uninstall script handles all of this:
+
+```bash
+chmod +x uninstall.sh
+./uninstall.sh --dry-run     # show what would go, change nothing
+./uninstall.sh               # remove, with confirmation
+./uninstall.sh --caches      # also clear the shared caches
+```
+
+Windows equivalent: `.\uninstall.ps1`, `-DryRun`, `-Caches`.
+
+**The shared caches are left alone by default.** They are used by any other
+Python project on the machine, so clearing them would force those to
+re-download too. Pass `--caches` only if you are sure. The Kaggle credential is
+never deleted automatically, since it is yours rather than the project's.
+
+---
+
 ## What is deliberately not in this repository
 
 | Excluded | Why | How to obtain |

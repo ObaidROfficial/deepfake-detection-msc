@@ -27,19 +27,16 @@ module that can be run independently:
 
 Two design decisions shape this structure.
 
-**Manifests as the interface.** Rather than each stage discovering images on
-disk independently, `data_prep.py` produces CSV manifests listing file paths
-and labels, and every downstream stage reads those. This means the exact set of
-images used in any experiment is a small text file that can be committed to
-version control, inspected, and diffed. It also guarantees that the baselines
-and the CNN are evaluated on identical images, which is necessary for the
-comparison in Chapter 6 to be meaningful.
+**Manifests as the interface.** `data_prep.py` produces CSV manifests of file
+paths and labels, and every downstream stage reads those rather than
+discovering images independently. The exact image set for any experiment is
+therefore a small text file that can be committed, inspected and diffed, and
+the baselines and CNN are guaranteed to be evaluated on identical images.
 
-**Configuration in one file.** All hyperparameters, paths, dataset identifiers
-and experiment settings live in `config.yaml`. No numeric constant that affects
-a result is written into code. This was motivated by the reproducibility
-requirement (N5, N6) but proved valuable in practice: the resolution ablation
-in Chapter 6 required changing a single line.
+**Configuration in one file.** All hyperparameters, paths and experiment
+settings live in `config.yaml`; no result-affecting constant is written into
+code. Motivated by requirements N5 and N6, this proved valuable in practice —
+the resolution ablation required changing a single line.
 
 ## 4.2 Data pipeline design
 
@@ -92,19 +89,24 @@ genuine classical computer vision pipeline. HOG encodes the distribution of
 gradient orientations; LBP encodes local texture. This baseline was chosen
 partly because exploratory analysis had identified sharpness as the strongest
 simple discriminator, and HOG and LBP are precisely gradient and texture
-descriptors — so this baseline directly measures how much of the task is
-solvable from the signal expected to be generator-specific.
+descriptors. Since Frank et al. (2020) locate the GAN artefact signal in the
+high-frequency band, this baseline directly measures how much of the task is
+solvable from exactly the signal expected to be generator-specific.
 
 ### CNN
 
-**MobileNetV2**, ImageNet-pretrained, was selected as the primary model. The
-reasoning is explicitly a compute trade-off. At approximately 2.2 million
-parameters after replacing the classifier, using depthwise separable
-convolutions, it trains at a workable rate on CPU. Larger architectures such as
-Xception, which is common in this literature, were not viable on the available
-hardware within the project timeframe.
+**MobileNetV2** (Sandler et al., 2018), ImageNet-pretrained, was selected as
+the primary model. The reasoning is explicitly a compute trade-off: its
+depthwise separable convolutions and inverted residual structure give roughly
+2.2 million parameters after replacing the classifier, which trains at a
+workable rate on CPU. Xception, established as a strong baseline for this task
+by Rössler et al. (2019) and common in the literature since, was not viable on
+the available hardware.
 
-**EfficientNet-B0** was included in the design as an architecture comparison.
+**EfficientNet-B0** (Tan and Le, 2019) was included as an architecture
+comparison. Its compound scaling approach — scaling depth, width and resolution
+together rather than independently — makes it a meaningfully different design
+rather than simply a larger network.
 
 Transfer learning was chosen over training from scratch. With 20,000 training
 images, a randomly initialised network would almost certainly underperform, and
@@ -170,8 +172,9 @@ Six perturbation families were selected to span two categories:
 | Contrast shift | ±20%, ±40% | Rescaling |
 
 The destructive/rescaling split is the design's analytical core. If the
-detector depends on high-frequency detail, destructive perturbations should
-damage it substantially more than rescaling ones. Multiple magnitudes per
+detector depends on high-frequency detail — as Frank et al. (2020) would
+predict for GAN-generated imagery — destructive perturbations should damage it
+substantially more than rescaling ones. Multiple magnitudes per
 family were included so the shape of the degradation curve is visible, not just
 its endpoint.
 

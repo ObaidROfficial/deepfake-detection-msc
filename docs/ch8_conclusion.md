@@ -8,10 +8,14 @@
 
 **Objective 1 — structured literature review.** Achieved. Chapter 2 covers
 generation techniques, the progression of detection approaches, benchmark
-datasets, and the generalisation and robustness literature. Frank et al.'s
-(2020) finding that GAN frequency artefacts originate in generator upsampling
-operations proved central, providing a mechanism that explained results
-initially observed empirically.
+datasets, and the generalisation and robustness literature, drawing on eleven
+sources verified against the original papers. Frank et al.'s (2020) finding
+that GAN frequency artefacts originate in generator upsampling proved central,
+supplying a mechanism that explained results initially observed empirically.
+Yan et al. (2023) also shaped the methodology, by establishing that accuracy
+figures are not reliably comparable across papers — which is why every model
+here is evaluated under one fixed protocol rather than against quoted
+benchmarks.
 
 **Objective 2 — prepare balanced, reproducible datasets.** Achieved and
 exceeded in one respect. Two datasets using genuinely different manipulation
@@ -55,8 +59,9 @@ dataset was 0.5453. No operating point recovers usable performance, so this
 cannot be fixed by recalibration.
 
 **The discriminative signal is high-frequency, and this explains both
-failures.** Raising input resolution from 128 to 224 pixels, with all else
-constant, was worth 10.1 accuracy points. Perturbations that remove or mask
+failures.** Consistent with Frank et al. (2020), who trace GAN artefacts to
+generator upsampling, raising input resolution from 128 to 224 pixels with all
+else constant was worth 10.1 accuracy points. Perturbations that remove or mask
 high-frequency content cost up to 38.5 points; intensity rescaling of
 comparable perceptual magnitude cost at most 3.8. One mechanism accounts for
 the resolution effect, the robustness profile and the transfer failure, and it

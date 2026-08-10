@@ -14,10 +14,10 @@
 Within the distribution they are trained on, very effective. MobileNetV2
 reached 94.3% accuracy at an AUC of 0.987, and even logistic regression on
 32×32 greyscale pixels reached 73.6%. Outside that distribution, ineffective —
-all three models fell to approximately chance on an unseen manipulation method.
+all four models fell to approximately chance on an unseen manipulation method.
 The answer therefore depends entirely on whether the question means "on the
-test set" or "in deployment", and the difference between those two readings is
-43 accuracy points.
+test set" or "in deployment", and for the best model the difference between
+those two readings is 44.2 accuracy points.
 
 **RQ2: Which features or patterns are most useful in distinguishing real and
 fake media?**
@@ -61,9 +61,8 @@ from 0.943 to 0.052 and the ranking inverts.
 
 The limitation this project documents most clearly is that in-domain accuracy
 and cross-domain reliability are not merely different — they appear to be in
-tension. Across three model families, the generalisation gap widened
-monotonically as in-domain accuracy improved: 24.7, then 30.7, then 43.2
-points. If detectors succeed by exploiting generator-specific artefacts, a
+tension. Across four models the generalisation gap widened monotonically as in-domain
+accuracy improved: 24.7, 30.7, 43.2, then 44.2 points. If detectors succeed by exploiting generator-specific artefacts, a
 better detector is partly one that exploits them more thoroughly, and that
 offers no protection against a generator it has not seen.
 
@@ -71,16 +70,14 @@ offers no protection against a generator it has not seen.
 
 The experimental design supports the conclusions drawn from it. Splits are
 seeded and verified disjoint by assertion, manifests are committed so the exact
-subsets can be reconstructed, and all hyperparameters live in a single
-configuration file rather than being scattered through code. Every result in
-Chapter 6 can be regenerated from a clean clone.
+subsets can be reconstructed, and all hyperparameters live in one configuration
+file. Every result in Chapter 6 can be regenerated from a clean clone.
 
-Dataset independence was verified rather than assumed. Before committing
-compute to training, I checked whether Dataset B shared a real-image source
-with Dataset A, since that would have invalidated the cross-dataset design.
-Perceptual hashing found zero overlap across 1,400 sampled images, and Dataset
-A's mean image retains 1.6 times the edge structure of Dataset B's, consistent
-with FFHQ's landmark alignment and its absence in OpenForensics.
+Dataset independence was verified rather than assumed, before any compute was
+committed to training. Perceptual hashing found zero overlap across 1,400
+sampled real images, and Dataset A's mean image retains 1.6 times the edge
+structure of Dataset B's — consistent with FFHQ's landmark alignment and its
+absence in OpenForensics.
 
 The threshold diagnostic distinguishing calibration failure from representation
 failure adds something beyond reporting accuracy. Two models can both score

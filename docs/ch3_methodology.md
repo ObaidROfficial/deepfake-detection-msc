@@ -17,8 +17,8 @@ generator technology has changed substantially and older detection results
 often describe systems that no longer represent the threat.
 
 The experimental component follows a comparative design. Rather than proposing
-a novel architecture, the project evaluates three model families of increasing
-sophistication under a single fixed protocol, so that differences in
+a novel architecture, the project evaluates four models of increasing sophistication
+under a single fixed protocol, so that differences in
 performance can be attributed to the models rather than to differences in how
 they were tested. Two evaluation conditions are applied to every model: an
 in-domain test set drawn from the same dataset as training, and a cross-dataset
@@ -32,10 +32,11 @@ model and reporting its accuracy.
 ## 3.2 Development methodology
 
 An Agile, iterative approach was adopted rather than a Waterfall sequence.
+Dawson (2015) characterises the choice as depending on how well requirements
+can be specified at the outset, and that framing is what settles it here.
 
-The justification is that the project's later stages were genuinely dependent
-on findings from earlier ones in ways that could not have been specified in
-advance. The decision to run a resolution ablation, for example, came from
+The project's later stages were genuinely dependent on findings from earlier
+ones in ways that could not have been specified in advance. The decision to run a resolution ablation, for example, came from
 noticing that a converged model had plateaued below expectation; the robustness
 suite's central prediction came from the result of that ablation. A Waterfall
 plan fixed at proposal stage would have specified neither.
@@ -141,7 +142,7 @@ measurements stable.
 
 **Ethics approval.** The project was registered on the Arden Ethics Portal and
 approval was granted before any work began, in accordance with the Arden
-University Ethics Policy (QA 39).
+University Ethics Policy (Arden University, 2023).
 
 **Applicability of participant procedures.** The Ethics Policy sets out
 requirements for participant information sheets, informed consent, debriefing
@@ -166,8 +167,8 @@ derives from OpenForensics, released for research purposes. Both licences are
 recorded in the repository, and users must download the data themselves under
 their own accounts.
 
-**Professional practice.** The BCS Code of Conduct requires competence,
-due regard for public interest, and professional integrity. Two aspects are
+**Professional practice.** The BCS Code of Conduct (BCS, 2022) requires
+competence, due regard for the public interest, and professional integrity. Two aspects are
 relevant. First, the project reports its own failures and corrections rather
 than presenting only favourable results, which Chapter 5 and Chapter 7 document
 in detail. Second, the dual-use character of the robustness findings was

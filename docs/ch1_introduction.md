@@ -8,63 +8,63 @@
 ## 1.1 Background
 
 Synthetic media has moved from a research curiosity to a practical problem in
-under a decade. Generative Adversarial Networks, introduced in 2014, made it
-possible to produce images that do not correspond to anything that ever
-existed, and by 2019 architectures such as StyleGAN could synthesise human
-faces that most people cannot reliably identify as artificial. A parallel line
-of work made it straightforward to replace one person's face with another's in
-existing photographs and video.
+under a decade. Generative Adversarial Networks, introduced by Goodfellow et
+al. (2014), made it possible to produce images that do not correspond to
+anything that ever existed, and by 2019 StyleGAN (Karras, Laine and Aila, 2019)
+could synthesise human faces at 1024×1024 that most people cannot reliably
+identify as artificial. A parallel line of work made it straightforward to
+replace one person's face with another's in an existing photograph.
 
-The term deepfake now covers both. The techniques have legitimate applications
-in film production, accessibility and education, but the harmful uses are
-well documented: non-consensual intimate imagery, financial fraud through
-impersonation, and political disinformation. The tools required have become
-progressively more accessible, so the barrier to producing convincing forged
-media is no longer technical skill or computing resources.
+The techniques have legitimate applications in film, accessibility and
+education, but the harmful uses are well documented: non-consensual intimate
+imagery, impersonation fraud, and political disinformation. The tools have
+become progressively more accessible, so the barrier is no longer technical
+skill or computing resources.
 
-This creates a detection problem, and detection has not kept pace with
-generation. Research systems report high accuracy on benchmark datasets, but
-there is a persistent and widely acknowledged gap between benchmark performance
-and behaviour on media encountered in the real world.
+Detection has not kept pace. Research systems report high accuracy on benchmark
+datasets, but there is a persistent gap between benchmark performance and
+behaviour on media encountered in the real world.
 
 ## 1.2 Problem statement
 
 Published deepfake detectors routinely report accuracies above 95% on standard
-benchmarks. Two things complicate reading those figures as evidence of
-practical capability.
+benchmarks such as FaceForensics++ (Rössler et al., 2019). Three things
+complicate reading those figures as evidence of practical capability.
 
-The first is generalisation. A detector is trained on manipulations produced by
-methods that existed when the training set was assembled. A deployed detector
-will encounter methods that did not. If detection depends on artefacts specific
-to particular generators, then accuracy on familiar manipulations may say very
+**Comparability.** Yan et al. (2023) argue that the absence of a standardised
+benchmark in this field produces "unfair performance comparisons and
+potentially misleading results", because data pipelines, experimental settings
+and evaluation metrics differ between papers. Headline accuracies from
+different studies are therefore not straightforwardly comparable.
+
+**Generalisation.** A detector is trained on manipulations produced by methods
+that existed when the training set was assembled. A deployed detector will
+encounter methods that did not. If detection depends on artefacts specific to
+particular generators, then accuracy on familiar manipulations may say very
 little about performance on unfamiliar ones.
 
-The second is robustness. Benchmark images are pristine. Images that circulate
-in the world are compressed, resized and re-encoded, often repeatedly. If the
-evidence a detector relies on is fine-grained, and compression is designed
-specifically to discard fine-grained detail as perceptually unimportant, then
-distribution itself may degrade detectability.
+**Robustness.** Benchmark images are pristine. Images that circulate in the
+world are compressed, resized and re-encoded, often repeatedly. If the evidence
+a detector relies on is fine-grained, and compression is designed specifically
+to discard fine-grained detail as perceptually unimportant, then distribution
+itself may degrade detectability.
 
 These are usually studied separately. This project treats them together, on the
 hypothesis that they may share a cause.
 
 ## 1.3 Rationale
 
-The rationale for the project is that reporting a single accuracy figure tells
-you very little about whether a detector would be useful, and that the
-interesting question is not *whether* detectors fail outside their training
-distribution — this is established — but *how* they fail and *why*.
+A single accuracy figure tells you very little about whether a detector would
+be useful. The interesting question is not *whether* detectors fail outside
+their training distribution — that is established — but *how* and *why*.
 
 The distinction matters practically. A detector whose ranking is correct but
-whose threshold is misplaced can be fixed by recalibration. One whose learned
-representation carries no relevant information cannot. One whose ranking is
-actively inverted is worse than useless. These are different problems with
-different remedies, and reporting accuracy alone cannot separate them.
+whose threshold is misplaced can be recalibrated. One whose representation
+carries no relevant information cannot. One whose ranking is actively inverted
+is worse than useless. Reporting accuracy alone cannot separate them.
 
-There is also a resourcing rationale. Most published work in this area assumes
-substantial GPU capacity. This project was carried out entirely on a CPU-only
-consumer laptop, and documenting what is and is not achievable under that
-constraint has some value for practitioners without access to better hardware.
+There is also a resourcing rationale: most published work assumes substantial
+GPU capacity, whereas this project ran entirely on a CPU-only consumer laptop.
 
 ## 1.4 Aim
 
