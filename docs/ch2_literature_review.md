@@ -8,20 +8,17 @@
 
 ## 2.1 Introduction to the review
 
-This chapter reviews the technical and academic background to the project. It
-covers how deepfakes are produced, how detection has developed, which datasets
-the field relies on, and the two problems that motivate this dissertation:
-poor generalisation across manipulation methods, and fragility under everyday
-image degradation.
+This chapter reviews the background to the project: how deepfakes are
+produced, how detection has developed, which datasets the field relies on, and
+the two problems motivating this dissertation — poor generalisation across
+manipulation methods, and fragility under everyday image degradation.
 
-The search was carried out using IEEE Xplore, the ACM Digital Library,
-ScienceDirect and Google Scholar, with the arXiv preprint server used to reach
-recent work not yet formally published. Search terms included "deepfake
-detection", "GAN artefact detection", "cross-dataset generalisation" and
-"adversarial attacks on deepfake detectors". Priority was given to
-peer-reviewed papers published between 2019 and 2026, since the field moves
-quickly and older work often describes generators that are no longer
-representative.
+Searches used IEEE Xplore, the ACM Digital Library, ScienceDirect and Google
+Scholar, with arXiv for recent work not yet formally published. Terms included
+"deepfake detection", "GAN artefact detection", "cross-dataset generalisation"
+and "adversarial attacks on deepfake detectors". Priority went to peer-reviewed
+work from 2019 onwards, since older papers often describe generators no longer
+representative of the threat.
 
 ## 2.2 How deepfakes are generated
 

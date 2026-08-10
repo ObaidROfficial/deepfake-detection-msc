@@ -171,8 +171,10 @@ considerations, and the risk register.
 **Chapter 4** describes the design of the pipeline, the model selection
 rationale, and the experimental and evaluation framework.
 
-**Chapter 5** documents the implementation, including a detailed account of
-the defects and misjudgements encountered and how they were resolved.
+**Chapter 5** documents the implementation, including the demonstration
+tools - a command line classifier and a graphical interface - and a detailed
+account of the defects and misjudgements encountered and how they were
+resolved.
 
 **Chapter 6** presents the results: in-domain performance, cross-dataset
 transfer, the resolution ablation, the robustness suite and the adversarial

@@ -189,7 +189,43 @@ label rather than the ground-truth label, since an attacker probing a deployed
 detector observes only its output. Both regimes are run so the difference can
 be quantified.
 
-## 4.6 Reproducibility design
+## 4.6 Demonstration interface design
+
+The experiment scripts establish that the model was measured. They do not make
+it usable. Three design decisions shaped the interface that does.
+
+**One inference path, two front ends.** A command line tool (`predict.py`) and
+a web interface (`app.py`) share the same preprocessing and inference code,
+the interface importing from the tool. Duplicating the pipeline would let the
+two diverge silently — a difference in resizing or normalisation would give
+different verdicts for the same image with nothing to signal it.
+
+**Face detection before classification.** The model was trained on tightly
+cropped 256×256 faces. In a half-length portrait the face may occupy a fifth of
+the frame, so after resizing the model sees mostly background. The interface
+detects and crops to the largest face first, and displays the cropped region so
+the user can see what was actually classified.
+
+**The interface reports its own limits.** The evaluation established that the
+detector approaches chance on unseen manipulation methods, degrades sharply
+under compression, and fails toward "real" rather than toward uncertainty. An
+interface returning "REAL, 100% confident" would be at its most confident
+precisely when least reliable.
+
+Three measures address this. Inputs are checked against the validated
+conditions, with warnings citing the *measured* accuracy for that condition. A
+standing notice states that diffusion-generated images are out of scope, since
+users reach for those first. And confidence is presented as an uncalibrated
+relative score, because softmax outputs are systematically overconfident.
+Chapter 8 argues a detector that silently fails while appearing to work is
+worse than none; applying that to this project's own deliverable was the
+minimum consistency required.
+
+**Distribution.** Weights are published as release assets rather than
+committed, and a setup script retrieves them automatically, so a reviewer
+reaches a working detector without the datasets or any training.
+
+## 4.7 Reproducibility design
 
 A single seed in `config.yaml` propagates to Python's `random`, NumPy and
 PyTorch. Split manifests are committed. Model weights are saved with their

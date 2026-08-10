@@ -212,15 +212,21 @@ jupyter lab                                  # notebooks/01_data_exploration.ipy
 
 ```
 deepfake-detection-msc/
+├── app.py                   # GRAPHICAL INTERFACE - the main way to use this
+├── setup.ps1 / setup.sh     # one-command install
 ├── config.yaml              # every setting lives here
 ├── requirements.txt         # + requirements-lock.txt with exact versions
-├── SETUP.md                 # step-by-step install guide
+├── README.md
+├── REPRODUCE.md             # for markers: four verification paths
+├── SETUP.md                 # detailed manual install
 ├── data/
 │   ├── raw/                 # downloaded datasets (gitignored)
-│   └── manifests/           # seeded split CSVs (committed - this is what pins the experiment)
+│   └── manifests/           # seeded split CSVs (committed - this pins the experiment)
 ├── notebooks/
 │   └── 01_data_exploration.ipynb
 ├── src/
+│   ├── predict.py           # command line classifier + shared inference logic
+│   ├── make_demo_samples.py # pull demo images from the held-out test split
 │   ├── utils.py             # config loading, seeding, thread setup
 │   ├── data_prep.py         # download, scan, subset, leakage assertion
 │   ├── benchmark.py         # CPU speed test
@@ -230,11 +236,21 @@ deepfake-detection-msc/
 │   ├── evaluate.py          # in-domain + cross-dataset, threshold diagnostic
 │   └── robustness.py        # degradation suite + FGSM
 ├── models/                  # trained weights (gitignored - see Releases)
-├── results/                 # metrics CSVs and 23 figures
+├── results/                 # metrics CSVs and 25 figures
 └── docs/                    # report chapters in Markdown
 ```
 
-### Run order
+### Using the detector
+
+```powershell
+python app.py                                  # graphical interface
+python src\predict.py --image photo.jpg        # single image
+python src\predict.py --folder images\ --csv out.csv   # batch
+```
+
+### Reproducing the experiments
+
+Requires the datasets — see [REPRODUCE.md](REPRODUCE.md).
 
 ```powershell
 python src\benchmark.py                        # optional: check CPU speed

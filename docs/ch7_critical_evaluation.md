@@ -22,18 +22,16 @@ test set" or "in deployment", and the difference between those two readings is
 **RQ2: Which features or patterns are most useful in distinguishing real and
 fake media?**
 
-High-frequency detail. Three separate pieces of evidence converge on this.
-Raising input resolution from 128 to 224 pixels, with everything else held
-constant, was worth ten accuracy points. Perturbations that remove or mask
-high-frequency content cost up to 38.5 points, while intensity rescaling of
-the same perceptual magnitude cost at most 3.8. And exploratory analysis found
-that sharpness was the strongest single low-level discriminator within Dataset
-A, with an AUC of 0.611 against 0.547 and 0.553 for brightness and contrast.
+High-frequency detail, on three converging lines of evidence: raising
+resolution from 128 to 224 pixels was worth ten accuracy points; perturbations
+removing high-frequency content cost up to 38.5 points against at most 3.8 for
+intensity rescaling; and sharpness was the strongest single low-level
+discriminator in the exploratory analysis (AUC 0.611, against 0.547 and 0.553
+for brightness and contrast).
 
-This aligns with Frank et al. (2020), who traced GAN frequency artefacts to the
-upsampling operations present in generator architectures. The useful features
-appear to be generator fingerprints rather than semantic indicators of
-manipulation.
+This aligns with Frank et al. (2020), who traced GAN frequency artefacts to
+generator upsampling. The useful features appear to be generator fingerprints
+rather than semantic indicators of manipulation.
 
 **RQ3: How does the performance of the proposed model compare to baseline
 approaches?**
@@ -46,11 +44,9 @@ for any of them. The CNNs' cross-dataset AUCs of 0.5593 and 0.5285 are
 statistically above chance and better than the pixel baseline, but best
 achievable accuracies of 54.5% and 52.2% do not constitute usable detectors.
 
-The comparison between the two CNNs is also informative. Configured to matched
-trainable capacity — 1,208,642 against 1,131,954 parameters, within 6.4% —
-EfficientNet-B0 gained 0.3 accuracy points in-domain for 85% more training time
-(4.44 hours against 2.40), and achieved a worse best validation loss. On this
-task, at this scale, architectural sophistication bought very little.
+At matched trainable capacity (within 6.4%), EfficientNet-B0 gained 0.3
+accuracy points in-domain for 85% more training time and a worse best
+validation loss. Architectural sophistication bought very little here.
 
 **RQ4: How robust is the detection model against manipulated or adversarial
 inputs?**
@@ -160,23 +156,15 @@ The Agile approach suited this project. Several conclusions changed as evidence
 accumulated, and a Waterfall plan fixed at proposal stage would have handled
 that badly.
 
-Three specific instances are worth recording because they shaped the outcome.
-The initial CPU benchmark overestimated training time by roughly a factor of
-seven, because it measured full backpropagation while the actual training keeps
-most of the backbone frozen. Being wrong conservatively was the right direction
-to be wrong when planning to a deadline, but the methodology quotes the measured
-figure rather than the projection.
-
-The first two full training runs were stopped by the epoch count rather than by
-convergence, and I reported a 78.7% result before noticing that validation
-accuracy was still climbing and sitting above training accuracy. Recognising
-that this indicated undertraining rather than a ceiling was what led to the
-resolution experiment, which produced the project's clearest ablation.
-
+Three instances shaped the outcome. The CPU benchmark overestimated training
+time roughly sevenfold, because it measured full backpropagation while training
+keeps most of the backbone frozen. The first two training runs were stopped by
+the epoch count rather than by convergence, and I reported 78.7% before
+noticing validation accuracy was still climbing and sitting above training
+accuracy — recognising that as undertraining led to the resolution ablation.
 The first FGSM implementation computed gradients against the ground-truth
-label, producing accuracy of exactly zero. Investigating why a number was
-*too* clean identified the label-leaking effect and produced a defensible
-figure.
+label, producing accuracy of exactly zero; investigating why a number was *too*
+clean identified the label-leaking effect.
 
 The pattern in all three is that the useful step was treating an anomalous
 result as a question rather than an answer.

@@ -8,26 +8,18 @@
 
 ## 6.1 Test plan
 
-Three questions were tested, each with a separate protocol.
+Three questions were tested. **In-domain performance**: how accurately does
+each model classify held-out images from the dataset it was trained on, using
+the 4,000-image test split of Dataset A. **Generalisation**: how does each
+perform on Dataset B (OpenForensics, 6,000 images), produced by a different
+manipulation method and seen by no model at any point. **Robustness**: how does
+the best model behave under degradation of the kind images routinely undergo
+online, and under deliberate attack.
 
-The first is straightforward performance: how accurately does each model
-classify held-out images drawn from the same dataset it was trained on? This
-uses the 4,000-image test split of Dataset A, which was never seen during
-training or validation.
-
-The second is generalisation: how does each model perform on a dataset produced
-by a different manipulation method? This uses the 6,000-image cross-test split
-of Dataset B (OpenForensics), which no model saw at any point.
-
-The third is robustness: how does the best model behave when its inputs are
-degraded in ways that happen routinely to images shared online, and when they
-are attacked deliberately?
-
-Metrics reported are accuracy, precision, recall, F1 and ROC-AUC. Because both
-test sets are exactly class-balanced by construction, accuracy is meaningful
-here and the 50% chance level is a genuine floor. ROC-AUC is reported alongside
-because it is threshold-independent, which turns out to matter considerably in
-the cross-dataset results.
+Accuracy, precision, recall, F1 and ROC-AUC are reported throughout. Both test
+sets are exactly class-balanced, so accuracy is meaningful and 50% is a genuine
+floor. ROC-AUC matters particularly in the cross-dataset results because it is
+threshold-independent.
 
 ## 6.2 In-domain results
 

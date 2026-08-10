@@ -1,8 +1,10 @@
 """
 Run the trained detector on your own images.
 
-This is the demonstration entry point for the artefact. It needs only the
-trained weights and an image - no datasets, no training.
+Command line classifier. For most purposes the graphical interface (app.py)
+is easier; this exists for batch work, scripting, and as the shared inference
+logic that app.py imports. Needs only the trained weights and an image - no
+datasets, no training.
 
     python src/predict.py --image path/to/photo.jpg
     python src/predict.py --folder path/to/images/

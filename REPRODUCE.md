@@ -53,7 +53,7 @@ required.
 | Robustness suite (Table 6.5, 6.6) | `results/robustness_mobilenet_v2.csv` |
 | Raw per-image scores | `results/scores_*.csv` |
 | CPU benchmark | `results/benchmark.csv` |
-| All 23 figures | `results/figures/` |
+| All 25 figures | `results/figures/` |
 
 The exact images used in every split are listed in `data/manifests/subset_*.csv`,
 so the experiment is pinned to specific files rather than to a sampling

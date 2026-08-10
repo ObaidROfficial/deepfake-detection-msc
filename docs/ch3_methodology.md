@@ -100,6 +100,22 @@ The supervisor was notified of this change before it was implemented.
 | F7 | Apply a systematic input-degradation suite to the trained model | Yes — 22 settings |
 | F8 | Implement an adversarial attack | Yes — FGSM, two label regimes |
 | F9 | Save trained weights for reuse without retraining | Yes |
+| F10 | Provide a means of classifying an arbitrary user-supplied image | Yes — command line tool and graphical interface |
+| F11 | Communicate the model's operating limits to a non-expert user | Yes — input checks and a standing scope notice |
+| F12 | Be installable and runnable by a third party without the datasets | Yes — one-command setup, weights published separately |
+
+Requirements F10 to F12 were not in the approved proposal, which specified only
+"a runnable script or notebook". They were added after an intermediate review,
+on the reasoning that a set of experiment scripts demonstrates that a model was
+*measured* but not that it can be *used*, and that the distinction matters for
+an artefact assessed on functionality.
+
+F11 deserves particular comment because it emerged from the findings rather
+than preceding them. Once the evaluation established that the detector fails
+badly outside its training distribution, and fails toward "real" rather than
+toward uncertainty, a tool that reported only a verdict and a confidence figure
+would have been actively misleading. The requirement to surface the operating
+limits is therefore a consequence of Chapter 6, not an interface preference.
 
 ### Non-functional requirements
 
@@ -112,6 +128,8 @@ The supervisor was notified of this change before it was implemented.
 | N5 | All results regenerable from a clean clone | Yes — seeded, manifests committed |
 | N6 | All hyperparameters in one place, not scattered through code | Yes — `config.yaml` |
 | N7 | No credentials or dataset content committed to version control | Yes — enforced by `.gitignore` |
+| N8 | A third party should reach a working detector in one command | Yes — `setup.ps1` / `setup.sh` |
+| N9 | The interface must not require the datasets or a Kaggle account | Yes — weights distributed via GitHub Releases |
 
 N3 deserves comment. It sounds like a convenience requirement but it had a real
 effect: an early benchmark run while a 3.75GB download was in progress produced

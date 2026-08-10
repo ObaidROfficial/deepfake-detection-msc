@@ -141,42 +141,33 @@ interpretable as a fraction of the pixel range.
 
 ## 5.7 Problems encountered
 
-Twelve defects or misjudgements are recorded here. They are included because
-Lesson 3 requires reflection on implementation problems, and because several
-of them shaped the results.
+Twelve defects or misjudgements were encountered. The six that materially
+shaped the results are discussed below; the remainder are tabulated. They are
+included because Lesson 3 requires reflection on implementation problems.
 
-**1. Benchmark overestimated training cost by seven times.** The CPU benchmark
-measured full backpropagation through all parameters and projected 2.1–3.4
-hours per model. Actual training keeps most of the backbone frozen, so
-gradients flow through only a fraction of the network; measured throughput was
-144 images per second against a projected 15–25. The benchmark was still worth
-running — it established feasibility — but the methodology quotes the measured
-figure. Being wrong conservatively is the right direction when planning to a
-deadline.
+**1. Benchmark overestimated training cost by seven times.** It measured full
+backpropagation through all parameters and projected 2.1–3.4 hours per model,
+but training keeps most of the backbone frozen; measured throughput was 144
+images per second against a projected 15–25. The benchmark still established
+feasibility, and being wrong conservatively is the right direction when
+planning to a deadline, but the methodology quotes the measured figure.
 
-**2. Manifests stored absolute paths.** The first implementation wrote full
-Windows paths into the split CSVs. Since manifests are committed to version
-control, this would have embedded the developer's directory structure and made
-the splits unusable on any other machine. Fixed to store paths relative to the
-project root.
+Six further defects were minor in isolation but are recorded because two of
+them would have produced invalid results rather than visible errors:
 
-**3. Oversized splits failed silently.** If the requested training size
-exceeded available images, the code consumed everything and left validation and
-test empty, which would only have surfaced as nonsensical evaluation output.
-Now checked upfront with an explicit error naming the actual numbers.
+| # | Defect | Consequence if unfixed |
+|---|---|---|
+| 2 | Manifests stored absolute Windows paths | Committed splits unusable on any other machine |
+| 3 | Oversized training size silently emptied val/test | Invalid results, visible only as nonsense metrics |
+| 4 | Notebook cells generated without trailing newlines | Every cell concatenated to one line; `SyntaxError` |
+| 5 | `numpy<2.0.0` pin forced a source build | Install failure on Python 3.14; OpenCV held back |
+| 8 | Baselines extracted features at 128px while the CNN moved to 224px | A resolution advantage credited to architecture |
+| 9 | Perturbations written as closures | Unpicklable, so the suite failed under Windows `spawn` |
 
-**4. Notebook cells rendered as a single line.** The exploration notebook was
-generated programmatically, and I built the `source` arrays by splitting on
-newlines without retaining them. The nbformat specification requires each line
-to keep its trailing newline, so Jupyter concatenated every cell into one
-unreadable line and the code raised `SyntaxError`. Rebuilt using
-`splitlines(keepends=True)`.
-
-**5. Restrictive numpy pin caused a build failure.** `requirements.txt`
-initially pinned `numpy<2.0.0`. On Python 3.14 this forced pip to build numpy
-1.26.4 from source, which failed for lack of a C compiler; on Python 3.11 it
-succeeded but held OpenCV back to an older release. Every other package in the
-stack is built against the numpy 2.x ABI. The upper bound was removed.
+Two smaller issues were also fixed: skimage warned that LBP on floating-point
+images behaves unpredictably where adjacent pixels are near-equal, resolved by
+computing LBP on `uint8`; and the robustness plotting grid was hardcoded at
+2×3, silently dropping two families once FGSM was split into two label regimes.
 
 **6. Two training runs stopped by configuration, not convergence.** The first
 full run halted at eight epochs with validation loss still falling and
@@ -239,11 +230,7 @@ photograph passed every check while the face within it cropped to 149×149 and
 was upscaled to 224, precisely the condition the warning exists to flag.
 Reordered so inspection runs on the region actually fed to the model.
 
-Two smaller issues were also fixed: skimage warned that LBP on floating-point
-images can behave unpredictably where adjacent pixels are near-equal, resolved
-by computing LBP on `uint8`; and the robustness plotting grid was hardcoded at
-2×3, which would have silently dropped two families once FGSM was split into
-two label regimes.
+
 
 ## 5.8 Reflection on the methodology
 

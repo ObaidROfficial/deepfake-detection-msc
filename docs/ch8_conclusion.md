@@ -107,22 +107,19 @@ datasets spanning GAN synthesis, face swapping, face reenactment and diffusion
 generation, evaluated pairwise, would establish whether the widening-gap
 pattern is general or specific to the pair tested here.
 
-**Test whether the high-frequency dependence can be broken deliberately.** If
-the detector fails because it relies on generator-specific high-frequency
-artefacts, then training with aggressive JPEG and downscaling augmentation
-should force it toward more transferable features. This would cost in-domain
-accuracy. Whether that trade is worthwhile is an empirical question and a
-directly testable one — the pipeline already supports it.
+**Test whether the high-frequency dependence can be broken deliberately.**
+Training with aggressive JPEG and downscaling augmentation should force the
+model toward more transferable features, at some cost to in-domain accuracy.
+Whether that trade is worthwhile is directly testable and the pipeline already
+supports it.
 
-**Frequency-domain input representations.** Given that Frank et al. work
-directly in the frequency domain and this project's results point the same way,
-training on DCT or wavelet representations rather than pixels is a natural
-extension.
+**Frequency-domain input representations.** Training on DCT or wavelet
+representations rather than pixels is a natural extension given where these
+results point.
 
 **Adversarial training and stronger attacks.** FGSM is the weakest standard
-attack. Iterative attacks such as PGD, and realistic black-box transfer
-attacks, would give a fuller picture, and adversarial training is the obvious
-mitigation to evaluate.
+attack; iterative attacks such as PGD and realistic black-box transfer attacks
+would give a fuller picture.
 
 **Demographic auditing.** Neither dataset provides demographic metadata, so
 performance disparities across groups could not be tested. Given that
