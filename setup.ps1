@@ -72,7 +72,7 @@ Ok "PyTorch installed"
 
 if ($Minimal) {
     Write-Host "    Installing demo dependencies only..."
-    & $vpy -m pip install pillow pyyaml numpy pandas opencv-python gradio --quiet
+    & $vpy -m pip install pillow pyyaml numpy pandas "opencv-python<5" gradio --quiet
     Ok "Demo dependencies installed (experiments will not run - omit -Minimal for those)"
 } else {
     Write-Host "    Installing full requirements..."

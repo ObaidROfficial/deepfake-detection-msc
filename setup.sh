@@ -70,7 +70,7 @@ ok "PyTorch installed"
 
 if [ "$MINIMAL" -eq 1 ]; then
   echo "    Installing demo dependencies only..."
-  "$VPY" -m pip install pillow pyyaml numpy pandas opencv-python gradio --quiet
+  "$VPY" -m pip install pillow pyyaml numpy pandas "opencv-python<5" gradio --quiet
   ok "Demo dependencies installed (omit --minimal for the experiments)"
 else
   echo "    Installing full requirements..."

@@ -79,6 +79,18 @@ def detect_and_crop_face(im: Image.Image, margin: float = 0.35):
     except ImportError:
         return im, "OpenCV not available - using the whole image uncropped."
 
+    # CascadeClassifier is part of the legacy objdetect API. It is present in
+    # OpenCV 4.x but moved in OpenCV 5, so check before using it rather than
+    # letting the AttributeError surface as an opaque failure. requirements.txt
+    # pins <5 for this reason; the check covers users who installed manually.
+    if not hasattr(cv2, "CascadeClassifier"):
+        return im, (
+            f"Face detection unavailable: OpenCV {getattr(cv2, '__version__', '?')} "
+            f"does not provide CascadeClassifier (it moved after 4.x). "
+            f"Classifying the whole image, which is unreliable unless it is "
+            f"already a face crop. Fix with: pip install 'opencv-python<5'"
+        )
+
     try:
         arr = np.array(im.convert("RGB"))
         grey = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)

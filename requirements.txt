@@ -19,7 +19,13 @@ scikit-image>=0.22.0
 scipy>=1.12.0
 
 # --- Image handling ---
-opencv-python>=4.9.0
+# Upper bound is deliberate. Face detection in predict.py uses
+# cv2.CascadeClassifier, part of the legacy objdetect API, which is present in
+# OpenCV 4.x but moved in OpenCV 5. Without this pin a macOS install pulled
+# OpenCV 5 and face detection failed silently while Windows (held at 4.11 by an
+# earlier numpy pin) worked - a platform-dependent bug that took a cross-machine
+# test to surface.
+opencv-python>=4.9.0,<5.0.0
 Pillow>=10.2.0
 
 # --- Data ---

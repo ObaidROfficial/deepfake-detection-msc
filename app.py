@@ -156,14 +156,20 @@ def analyse(image_path, model_name: str, config: dict, progress=None):
     return headline, bars, warn_md, detail, crop
 
 
+# Every element sets its own colour explicitly. Setting it only on the wrapper
+# is not enough: Gradio's dark theme colours <b> white, which is invisible
+# against this cream background - the emphasised words simply disappeared.
 SCOPE_BANNER = """
 <div style="background:#FFF4E5;border-left:4px solid #ED6C02;padding:10px 14px;
-            border-radius:4px;margin-bottom:8px;font-size:0.92em;color:#663C00">
-<b>Scope:</b> trained on <b>GAN-generated</b> faces (StyleGAN) versus real
-photographs. Images from <b>diffusion models</b> — Midjourney, Stable Diffusion,
-DALL·E, Firefly — are <b>outside what this model was trained and tested on</b>,
-and it will frequently call them REAL. That is a documented limitation, not a
-malfunction. See the reliability panel below.
+            border-radius:4px;margin-bottom:8px;font-size:0.92em;
+            color:#663C00 !important;line-height:1.5">
+<span style="color:#663C00"><b style="color:#663C00">Scope:</b> trained on
+<b style="color:#663C00">GAN-generated</b> faces (StyleGAN) versus real
+photographs. Images from <b style="color:#663C00">diffusion models</b> —
+Midjourney, Stable Diffusion, DALL&middot;E, Firefly — are
+<b style="color:#663C00">outside what this model was trained and tested
+on</b>, and it will frequently call them REAL. That is a documented
+limitation, not a malfunction. See the reliability panel below.</span>
 </div>
 """
 

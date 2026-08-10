@@ -141,7 +141,7 @@ interpretable as a fraction of the pixel range.
 
 ## 5.7 Problems encountered
 
-Twelve defects or misjudgements were encountered. The six that materially
+Fourteen defects or misjudgements were encountered. The six that materially
 shaped the results are discussed below; the remainder are tabulated. They are
 included because Lesson 3 requires reflection on implementation problems.
 
@@ -152,8 +152,11 @@ images per second against a projected 15–25. The benchmark still established
 feasibility, and being wrong conservatively is the right direction when
 planning to a deadline, but the methodology quotes the measured figure.
 
-Six further defects were minor in isolation but are recorded because two of
-them would have produced invalid results rather than visible errors:
+Eight further defects were minor in isolation but are recorded because several
+would have produced invalid results or silent failures rather than visible
+errors. The last two were found only by installing the project on a second
+machine, which is the argument for testing a deliverable somewhere other than
+where it was built:
 
 | # | Defect | Consequence if unfixed |
 |---|---|---|
@@ -163,6 +166,8 @@ them would have produced invalid results rather than visible errors:
 | 5 | `numpy<2.0.0` pin forced a source build | Install failure on Python 3.14; OpenCV held back |
 | 8 | Baselines extracted features at 128px while the CNN moved to 224px | A resolution advantage credited to architecture |
 | 9 | Perturbations written as closures | Unpicklable, so the suite failed under Windows `spawn` |
+| 13 | OpenCV unpinned | macOS installed OpenCV 5, where `CascadeClassifier` has moved; face detection failed while Windows worked |
+| 14 | Emphasis in the GUI banner had no explicit colour | Inherited white from the dark theme, rendering the bold words invisible on a light background |
 
 Two smaller issues were also fixed: skimage warned that LBP on floating-point
 images behaves unpredictably where adjacent pixels are near-equal, resolved by
