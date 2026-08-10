@@ -126,14 +126,26 @@ echo -e "${C_GREEN}  Setup complete${C_OFF}"
 echo -e "${C_GREEN}===================================================================${C_OFF}"
 cat <<'EOF'
 
-  Launch the graphical interface:
+  ####################################################################
+  #                                                                  #
+  #   TO START THE APP, RUN:      ./run.sh                           #
+  #                                                                  #
+  ####################################################################
+
+  run.sh activates the virtual environment for you. Note that on macOS
+  the bare command `python` does not exist - only `python3` - so
+  running `python app.py` without activating the venv will fail with
+  "command not found".
+
+  Other options:
+
+      ./run.sh --share                  temporary public link
+      ./run.sh --image photo.jpg        classify one image, no GUI
+
+  Or do it manually if you prefer:
 
       source venv/bin/activate
       python app.py
-
-  Or classify from the command line:
-
-      python src/predict.py --image path/to/photo.jpg
 
   To reproduce the reported experiments you also need the datasets -
   see REPRODUCE.md, Path C.

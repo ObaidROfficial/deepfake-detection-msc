@@ -133,14 +133,24 @@ Write-Host "  Setup complete" -ForegroundColor Green
 Write-Host "===================================================================" -ForegroundColor Green
 Write-Host @"
 
-  Launch the graphical interface:
+  ####################################################################
+  #                                                                  #
+  #   TO START THE APP, RUN:      .\run.ps1                          #
+  #                                                                  #
+  ####################################################################
+
+  run.ps1 uses the virtual environment directly, so you do not need to
+  activate it first.
+
+  Other options:
+
+      .\run.ps1 -Share                  temporary public link
+      .\run.ps1 -Image photo.jpg        classify one image, no GUI
+
+  Or do it manually if you prefer:
 
       .\venv\Scripts\Activate.ps1
       python app.py
-
-  Or classify from the command line:
-
-      python src\predict.py --image path\to\photo.jpg
 
   To reproduce the reported experiments you also need the datasets -
   see REPRODUCE.md, Path C.
