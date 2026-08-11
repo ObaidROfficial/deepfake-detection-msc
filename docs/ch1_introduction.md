@@ -9,21 +9,19 @@
 
 Synthetic media has moved from a research curiosity to a practical problem in
 under a decade. Generative Adversarial Networks, introduced by Goodfellow et
-al. (2014), made it possible to produce images that do not correspond to
-anything that ever existed, and by 2019 StyleGAN (Karras, Laine and Aila, 2019)
-could synthesise human faces at 1024×1024 that most people cannot reliably
-identify as artificial. A parallel line of work made it straightforward to
-replace one person's face with another's in an existing photograph.
+al. (2014), made it possible to produce images corresponding to nothing that
+ever existed, and by 2019 StyleGAN (Karras, Laine and Aila, 2019) could
+synthesise faces at 1024×1024 that most people cannot reliably identify as
+artificial. A parallel line of work made replacing one person's face with
+another's in an existing photograph straightforward.
 
 The techniques have legitimate applications in film, accessibility and
 education, but the harmful uses are well documented: non-consensual intimate
-imagery, impersonation fraud, and political disinformation. The tools have
+imagery, impersonation fraud, political disinformation. The tools have also
 become progressively more accessible, so the barrier is no longer technical
-skill or computing resources.
-
-Detection has not kept pace. Research systems report high accuracy on benchmark
-datasets, but there is a persistent gap between benchmark performance and
-behaviour on media encountered in the real world.
+skill or computing resources. Detection has not kept pace, and a persistent gap
+separates benchmark performance from behaviour on media encountered in the
+real world.
 
 ## 1.2 Problem statement
 
@@ -32,39 +30,38 @@ benchmarks such as FaceForensics++ (Rössler et al., 2019). Three things
 complicate reading those figures as evidence of practical capability.
 
 **Comparability.** Yan et al. (2023) argue that the absence of a standardised
-benchmark in this field produces "unfair performance comparisons and
-potentially misleading results", because data pipelines, experimental settings
-and evaluation metrics differ between papers. Headline accuracies from
-different studies are therefore not straightforwardly comparable.
+benchmark produces "unfair performance comparisons and potentially misleading
+results", because data pipelines, experimental settings and metrics differ
+between papers. Headline accuracies are therefore not straightforwardly
+comparable across studies.
 
 **Generalisation.** A detector is trained on manipulations produced by methods
-that existed when the training set was assembled. A deployed detector will
+that existed when the training set was assembled; a deployed detector will
 encounter methods that did not. If detection depends on artefacts specific to
-particular generators, then accuracy on familiar manipulations may say very
-little about performance on unfamiliar ones.
+particular generators, accuracy on familiar manipulations may say very little
+about unfamiliar ones.
 
-**Robustness.** Benchmark images are pristine. Images that circulate in the
-world are compressed, resized and re-encoded, often repeatedly. If the evidence
-a detector relies on is fine-grained, and compression is designed specifically
-to discard fine-grained detail as perceptually unimportant, then distribution
-itself may degrade detectability.
+**Robustness.** Benchmark images are pristine, whereas images circulating in
+the world are compressed, resized and re-encoded, often repeatedly. If the
+evidence a detector relies on is fine-grained, and compression is designed
+specifically to discard fine-grained detail as perceptually unimportant, then
+distribution itself may degrade detectability.
 
 These are usually studied separately. This project treats them together, on the
-hypothesis that they may share a cause.
+hypothesis that they share a cause.
 
 ## 1.3 Rationale
 
-A single accuracy figure tells you very little about whether a detector would
-be useful. The interesting question is not *whether* detectors fail outside
-their training distribution — that is established — but *how* and *why*.
+A single accuracy figure says very little about whether a detector would be
+useful. The interesting question is not *whether* detectors fail outside their
+training distribution — that is established — but *how* and *why*.
 
 The distinction matters practically. A detector whose ranking is correct but
-whose threshold is misplaced can be recalibrated. One whose representation
-carries no relevant information cannot. One whose ranking is actively inverted
-is worse than useless. Reporting accuracy alone cannot separate them.
-
-There is also a resourcing rationale: most published work assumes substantial
-GPU capacity, whereas this project ran entirely on a CPU-only consumer laptop.
+whose threshold is misplaced can be recalibrated; one whose representation
+carries no relevant information cannot; one whose ranking is actively inverted
+is worse than useless. Accuracy alone cannot separate them. There is also a
+resourcing rationale: most published work assumes substantial GPU capacity,
+whereas this project ran entirely on a CPU-only consumer laptop.
 
 ## 1.4 Aim
 
@@ -105,58 +102,46 @@ degraded inputs.
 
 ## 1.7 Scope and limitations
 
-The project addresses **still images and extracted video frames**, not
-temporal analysis of video sequences. Approaches exploiting inconsistency
-across frames are a substantial subfield in their own right and were outside
-what could be attempted here.
-
-Two datasets are used, providing one cross-method comparison. A larger matrix
-of generation methods would give a more general result but was not feasible
-within the timeframe.
-
-Both datasets are **GAN-era**. Diffusion models are increasingly displacing
-GANs for image synthesis, and the conclusions here may not extend to
-diffusion-generated content — particularly since the mechanism identified is
-specific to GAN architecture.
-
-Adversarial testing is limited to the Fast Gradient Sign Method under
-white-box conditions, where the attacker has full access to model gradients.
-Black-box and iterative attacks were not attempted.
+The project addresses **still images and extracted video frames**, not temporal
+analysis of video sequences; approaches exploiting inconsistency across frames
+are a substantial subfield of their own. Two datasets are used, giving one
+cross-method comparison — a larger matrix would be more general but was not
+feasible in the timeframe. Both are **GAN-era**, and since diffusion models are
+increasingly displacing GANs, the conclusions may not extend to
+diffusion-generated content, particularly as the mechanism identified here is
+specific to GAN architecture. Adversarial testing is limited to the Fast
+Gradient Sign Method under white-box conditions; black-box and iterative
+attacks were not attempted.
 
 The approved proposal specified FaceForensics++ and the DFDC corpus. Neither
 proved usable: the former requires a licence agreement with a turnaround
-measured in weeks, and the latter is approximately 470GB of video that cannot
-be processed on the available hardware. Substitutes were selected and the
-supervisor notified. This is discussed fully in Chapter 3, and the cost to
-comparability with published work is acknowledged in Chapter 7.
+measured in weeks, the latter is approximately 470GB of video that cannot be
+processed on the available hardware. Substitutes were selected and the
+supervisor notified. Chapter 3 discusses this fully and Chapter 7 acknowledges
+the cost to comparability with published work.
 
 ## 1.8 Summary of findings
 
-The results are stated here briefly so the reader knows where the report is
+The results are stated briefly here so the reader knows where the report is
 heading.
 
 Four models were evaluated: logistic regression on raw pixels, a HOG and LBP
 pipeline with a linear SVM, and two fine-tuned convolutional networks —
-MobileNetV2 and EfficientNet-B0 — configured to matched trainable capacity.
-In-domain accuracy rose from 73.6% to 94.6%. On an unseen manipulation method,
-all four scored between 47.9% and 51.1%, indistinguishable from chance on a
-balanced set. The generalisation gap therefore widened monotonically, from 24.7
-points to 44.2, as the models improved. Because the two CNNs are structurally
-very different and fail identically, the result is not attributable to a single
-architecture choice.
-
-A threshold diagnostic confirmed this is a representation failure rather than a
-calibration failure: no decision threshold in either polarity recovers usable
-accuracy.
+MobileNetV2 and EfficientNet-B0 — at matched trainable capacity. In-domain
+accuracy rose from 73.6% to 94.6%. On an unseen manipulation method all four
+scored between 47.9% and 51.1%, indistinguishable from chance, so the
+generalisation gap widened monotonically from 24.7 points to 44.2 as the models
+improved. Because the two CNNs are structurally very different and fail
+identically, this is not attributable to one architecture choice. A threshold
+diagnostic confirmed representation failure rather than calibration failure: no
+threshold in either polarity recovers usable accuracy.
 
 Robustness testing showed the detector is highly sensitive to any perturbation
-that removes or masks high-frequency detail, and largely insensitive to changes
-that preserve it. Under white-box adversarial attack at an imperceptible
-perturbation size, accuracy falls from 94.3% to 5.2% and the model's ranking
-inverts.
-
-A single mechanism accounts for both sets of results, and it was used to make
-predictions that were recorded before the experiments testing them.
+removing or masking high-frequency detail and largely insensitive to changes
+preserving it. Under white-box adversarial attack at an imperceptible
+perturbation, accuracy falls from 94.3% to 5.2% and the ranking inverts. A
+single mechanism accounts for both sets of results, and it was used to make
+predictions recorded before the experiments that tested them.
 
 ## 1.9 Report structure
 
@@ -172,9 +157,9 @@ considerations, and the risk register.
 rationale, and the experimental and evaluation framework.
 
 **Chapter 5** documents the implementation, including the demonstration
-tools - a command line classifier and a graphical interface - and a detailed
-account of the defects and misjudgements encountered and how they were
-resolved.
+tools - a graphical interface, a command line classifier and the installer that
+packages them - and a detailed account of the defects and misjudgements
+encountered and how they were resolved.
 
 **Chapter 6** presents the results: in-domain performance, cross-dataset
 transfer, the resolution ablation, the robustness suite and the adversarial
