@@ -38,7 +38,7 @@ function SizeOf($p) {
 }
 
 Write-Host "==================================================================="
-Write-Host "  Deepfake Detector - uninstall"
+Write-Host "  OBI DeepFake Image Detector - uninstall"
 Write-Host "==================================================================="
 Write-Host "`nProject folder: $HERE`n"
 

@@ -29,23 +29,47 @@ function Warn($msg)     { Write-Host "    $msg" -ForegroundColor Yellow }
 function Fail($msg)     { Write-Host "    $msg" -ForegroundColor Red }
 
 Write-Host "==================================================================="
-Write-Host "  Deepfake Detector - setup"
+Write-Host "  OBI DeepFake Image Detector - setup"
 Write-Host "  MSc Advanced Computing Project (COM7014)"
 Write-Host "==================================================================="
 
 # ---------------------------------------------------------------- 1. Python
 Step 1 "Checking Python"
+# Accepts 3.9 to 3.13. The upper bound is deliberate: on 3.14 numpy has no
+# wheel and falls back to a source build that fails, which is exactly how this
+# project's own environment setup went wrong the first time. Better to say so
+# now than to fail twenty minutes into a download with a compiler error.
 $py = $null
-foreach ($cmd in @("py -3.11", "py -3", "python")) {
+$rejected = @()
+foreach ($cmd in @("py -3.11", "py -3.12", "py -3.10", "py -3.13", "py -3.9",
+                   "py -3", "python")) {
     $parts = $cmd.Split(" ")
     $exe = $parts[0]
-    if (Get-Command $exe -ErrorAction SilentlyContinue) {
-        $v = & $exe $parts[1..$parts.Length] --version 2>&1
-        if ($LASTEXITCODE -eq 0) { $py = $cmd; Ok "Using '$cmd' -> $v"; break }
+    if (-not (Get-Command $exe -ErrorAction SilentlyContinue)) { continue }
+
+    $args = @()
+    if ($parts.Length -gt 1) { $args = $parts[1..($parts.Length - 1)] }
+    $v = & $exe @args -c "import sys;print('%d.%d' % sys.version_info[:2])" 2>$null
+    if ($LASTEXITCODE -ne 0 -or -not $v) { continue }
+
+    $maj, $min = $v.Trim().Split(".")
+    if ([int]$maj -eq 3 -and [int]$min -ge 9 -and [int]$min -le 13) {
+        $py = $cmd; Ok "Using '$cmd' -> Python $v"; break
     }
+    $rejected += "  $cmd is $v"
 }
+
 if (-not $py) {
-    Fail "No Python found. Install Python 3.11 from python.org and re-run."
+    if ($rejected.Count -gt 0) {
+        Fail "No usable Python found. This project needs 3.9 to 3.13."
+        $rejected | ForEach-Object { Write-Host $_ }
+        Write-Host "  Python 3.14 and newer will not work: numpy has no wheel for them"
+        Write-Host "  and the source build fails."
+        Write-Host "  Install 3.11 from https://www.python.org/downloads/release/python-3119/"
+        Write-Host "  It installs alongside what you already have."
+    } else {
+        Fail "No Python found. Install Python 3.11 from python.org and re-run."
+    }
     exit 1
 }
 

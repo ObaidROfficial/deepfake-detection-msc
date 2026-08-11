@@ -39,7 +39,7 @@ size_of() { [ -e "$1" ] && du -sh "$1" 2>/dev/null | cut -f1 || echo "-"; }
 exists()  { [ -e "$1" ]; }
 
 echo "==================================================================="
-echo "  Deepfake Detector - uninstall"
+echo "  OBI DeepFake Image Detector - uninstall"
 echo "==================================================================="
 echo -e "\nProject folder: $HERE\n"
 

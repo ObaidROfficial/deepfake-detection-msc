@@ -1,5 +1,5 @@
 """
-Deepfake Detector - graphical interface.
+OBI DeepFake Image Detector - graphical interface.
 
 Launches a local web interface for the trained detector. Drag an image in,
 get a verdict with confidence.
@@ -226,9 +226,9 @@ def build_interface(config: dict):
 
     # Gradio 6.0 moved `theme` and `css` from the Blocks constructor to
     # launch(). Passing them here raises a UserWarning and they are ignored.
-    with gr.Blocks(title="Deepfake Detector") as demo:
+    with gr.Blocks(title="OBI DeepFake Image Detector") as demo:
         gr.Markdown(
-            "# Deepfake Detector\n"
+            "# OBI DeepFake Image Detector\n"
             "MSc Advanced Computing Project (COM7014) — Muhammad Obaid Ur Rehman\n"
         )
         # Kept visible rather than collapsed. Users reach for diffusion-model

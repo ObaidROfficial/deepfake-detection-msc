@@ -34,19 +34,42 @@ warn() { echo -e "    ${C_YELLOW}$1${C_OFF}"; }
 fail() { echo -e "    ${C_RED}$1${C_OFF}"; }
 
 echo "==================================================================="
-echo "  Deepfake Detector - setup"
+echo "  OBI DeepFake Image Detector - setup"
 echo "  MSc Advanced Computing Project (COM7014)"
 echo "==================================================================="
 
 # ---------------------------------------------------------------- 1. Python
 step 1 "Checking Python"
+# Accepts 3.9 to 3.13. The upper bound is deliberate: on 3.14 numpy has no
+# wheel and falls back to a source build that fails, which is exactly how this
+# project's own environment setup went wrong the first time. Better to say so
+# now than to fail twenty minutes into a download with a compiler error.
 PY=""
-for c in python3.11 python3 python; do
-  if command -v "$c" >/dev/null 2>&1; then
+REJECTED=""
+for c in python3.11 python3.12 python3.10 python3.13 python3.9 python3 python; do
+  command -v "$c" >/dev/null 2>&1 || continue
+  v=$("$c" -c 'import sys;print("%d %d" % sys.version_info[:2])' 2>/dev/null) || continue
+  maj=$(echo "$v" | cut -d' ' -f1)
+  min=$(echo "$v" | cut -d' ' -f2)
+  if [ "$maj" -eq 3 ] && [ "$min" -ge 9 ] && [ "$min" -le 13 ]; then
     PY="$c"; ok "Using '$c' -> $($c --version 2>&1)"; break
   fi
+  REJECTED="$REJECTED  $c is $maj.$min\n"
 done
-[ -z "$PY" ] && { fail "No Python found. Install Python 3.11 and re-run."; exit 1; }
+
+if [ -z "$PY" ]; then
+  if [ -n "$REJECTED" ]; then
+    fail "No usable Python found. This project needs 3.9 to 3.13."
+    printf "%b" "$REJECTED"
+    echo "  Python 3.14 and newer will not work: numpy has no wheel for them"
+    echo "  and the source build fails."
+    echo "  Install 3.11 from https://www.python.org/downloads/release/python-3119/"
+    echo "  It installs alongside what you already have."
+  else
+    fail "No Python found. Install Python 3.11 and re-run."
+  fi
+  exit 1
+fi
 
 # ------------------------------------------------------------------ 2. venv
 step 2 "Virtual environment"
