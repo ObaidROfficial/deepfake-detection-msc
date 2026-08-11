@@ -134,6 +134,48 @@ points**.
 
 ## Install and run
 
+### Option 1 — the installer (no command line)
+
+Download the installer for your platform from the
+[latest release](https://github.com/ObaidROfficial/deepfake-detection-msc/releases/latest)
+and run it:
+
+| Platform | File |
+|---|---|
+| Windows | `OBI-DeepFake-Image-Detector-Setup.exe` |
+| macOS | `OBI-DeepFake-Image-Detector-Setup` |
+
+It sets everything up, downloads the trained weights, and puts a shortcut on
+your desktop. **Python is not required beforehand** — if the machine has
+nothing suitable, the installer offers to download the official Python 3.11.9
+from python.org, checks it against the published checksum, and installs it.
+Around 700MB is downloaded in total, so it needs an internet connection and a
+few minutes.
+
+"Nothing suitable" means no Python between 3.9 and 3.13. A machine running only
+Python 3.14 counts: numpy has no wheel for it and falls back to a source build
+that fails, which is what happened when this project was first set up. The
+installer detects that up front and installs 3.11.9 alongside rather than
+failing halfway through. Your existing Python is left untouched and stays the
+default for everything else.
+
+Two things to expect, both because these executables are not code-signed
+(signing needs a paid certificate from Microsoft or Apple):
+
+- **Windows** shows "Windows protected your PC". Click *More info* → *Run anyway*.
+- **macOS** refuses to open it on a double-click. Right-click the file, choose
+  *Open*, then confirm.
+
+How the installer works, and how to build it yourself, is in
+[installer/README.md](installer/README.md).
+
+To remove it later, run `OBI-DeepFake-Image-Detector-Uninstall` from the
+install folder, or see [Uninstalling](#uninstalling).
+
+### Option 2 — from source
+
+For anyone who wants the experiment code as well as the application.
+
 **Windows**
 
 ```powershell
@@ -150,19 +192,29 @@ cd deepfake-detection-msc
 chmod +x setup.sh && ./setup.sh
 ```
 
-That creates a virtual environment, installs the CPU build of PyTorch and all
-dependencies, downloads the trained weights from Releases, and verifies the
-install. Add `-Minimal` (Windows) or `--minimal` (Unix) to install only what
-the demo needs, skipping the experiment dependencies.
+This route does need Python 3.9–3.13 already installed. It creates a virtual
+environment, installs the CPU build of PyTorch and all dependencies, downloads
+the trained weights from Releases, and verifies the install. Add `-Minimal`
+(Windows) or `--minimal` (Unix) to install only what the demo needs, skipping
+the experiment dependencies.
 
 Then:
 
 ```powershell
-.\venv\Scripts\Activate.ps1     # source venv/bin/activate on macOS/Linux
-python app.py                   # graphical interface at http://127.0.0.1:7860
+.\run.ps1        # or ./run.sh on macOS/Linux
 ```
 
-## Try it on your own image
+Either way the detector opens in your browser at http://127.0.0.1:7860. Drag an
+image in and it returns a REAL or FAKE verdict with a confidence percentage.
+
+The interface warns when an input falls outside the conditions the model was
+validated on, and states where the detector is known to fail. That is
+deliberate rather than decorative — see the results above.
+
+### Classifying images from a script
+
+The same inference code is available as a command line tool, which is useful
+for batches. It needs the source install:
 
 ```powershell
 python src\predict.py --image your_photo.jpg
@@ -175,12 +227,8 @@ python src\predict.py --image your_photo.jpg
     confidence  : high
 ```
 
-No datasets or Kaggle account needed. `predict.py` also accepts `--folder` for
-batch classification and `--csv` to write results out.
-
-The tool warns when an input falls outside the conditions the model was
-validated on, and every run prints a summary of where the detector is known to
-fail. That is deliberate rather than decorative — see the results below.
+`predict.py` also accepts `--folder` for batch classification and `--csv` to
+write results out. No datasets or Kaggle account needed.
 
 ## For markers and reviewers
 
@@ -191,9 +239,12 @@ or rebuild everything from scratch (~8 h). No GPU needed for any of them.
 
 ---
 
-## Quick start
+## Rebuilding the experiments
 
-Full installation instructions in **[SETUP.md](SETUP.md)**. Short version:
+The two options above install the application. To re-run the experiments
+themselves you also need the datasets, which means a Kaggle account. Full
+instructions are in **[SETUP.md](SETUP.md)**; the short version, if you would
+rather set the environment up by hand than use `setup.ps1`:
 
 ```powershell
 python -m venv venv
@@ -213,7 +264,13 @@ jupyter lab                                  # notebooks/01_data_exploration.ipy
 ```
 deepfake-detection-msc/
 ├── app.py                   # GRAPHICAL INTERFACE - the main way to use this
-├── setup.ps1 / setup.sh     # one-command install
+├── setup.ps1 / setup.sh     # one-command install from source
+├── run.ps1 / run.sh         # launch the interface
+├── uninstall.ps1 / .sh      # remove a source install
+├── installer/               # the GUI installer shipped on Releases
+│   ├── installer.py         #   welcome -> options -> progress -> finish
+│   ├── uninstaller.py       #   GUI uninstaller, installed alongside the app
+│   └── build.py             #   compiles both with PyInstaller
 ├── config.yaml              # every setting lives here
 ├── requirements.txt         # + requirements-lock.txt with exact versions
 ├── README.md
@@ -247,6 +304,29 @@ python app.py                                  # graphical interface
 python src\predict.py --image photo.jpg        # single image
 python src\predict.py --folder images\ --csv out.csv   # batch
 ```
+
+### Uninstalling
+
+**If you used the installer.** Run `OBI-DeepFake-Image-Detector-Uninstall` from
+the install folder (or the desktop shortcut folder on macOS). It removes the
+application, its virtual environment, the model weights and the shortcut.
+
+**If you installed from source.**
+
+```powershell
+.\uninstall.ps1 -DryRun      # show what would be removed, delete nothing
+.\uninstall.ps1              # actually remove it
+```
+
+```bash
+./uninstall.sh --dry-run
+./uninstall.sh
+```
+
+Both leave the shared PyTorch and Hugging Face caches in your home directory
+alone by default, because other Python projects on the machine use them. Pass
+`-Caches` / `--caches` to clear those too. A `kaggle.json` credential, if you
+have one, is never touched — it belongs to you, not to this project.
 
 ### Reproducing the experiments
 

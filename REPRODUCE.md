@@ -66,7 +66,25 @@ procedure.
 No datasets, no Kaggle account, no training. This is the quickest way to
 confirm the artefact actually works.
 
-### 1. Install — one command
+### 1a. Install — the installer (nothing to type)
+
+Download the installer for your platform from the
+[latest release](https://github.com/ObaidROfficial/deepfake-detection-msc/releases/latest)
+and run it. Python is **not** needed beforehand; if the machine has nothing
+between 3.9 and 3.13, the installer offers to fetch the official Python 3.11.9
+from python.org, checks it against the published checksum, and installs it
+alongside whatever is already there.
+
+The executables are not code-signed, so Windows shows "Windows protected your
+PC" (*More info* → *Run anyway*) and macOS refuses a double-click (right-click
+→ *Open* → confirm). Details in [installer/README.md](installer/README.md).
+
+Once it finishes, use the desktop shortcut and skip to step 2.
+
+### 1b. Install — one command
+
+If you would rather have the source tree as well, or you are already at a
+terminal. This route does need Python 3.9–3.13 installed.
 
 **Windows**
 
@@ -115,14 +133,18 @@ into `models/`.
 
 ### 2. Launch the interface
 
+If you used the installer, the desktop shortcut does this. From a source
+install:
+
 ```powershell
-.\venv\Scripts\Activate.ps1
-python app.py
+.\run.ps1        # or ./run.sh on macOS/Linux
 ```
 
 Opens at `http://127.0.0.1:7860`. Drag an image in and it classifies on upload.
 
 ### 3. Or use the command line
+
+Source install only — the installer does not put `src/` on your path.
 
 ```powershell
 python src\predict.py --image path\to\your\photo.jpg
@@ -349,6 +371,13 @@ the most likely cause.
 ---
 
 ## Removing it afterwards
+
+**If you used the installer (Path B),** run
+`OBI-DeepFake-Image-Detector-Uninstall` from the install folder. It shows what
+will be removed and how much space that frees before it does anything, and it
+covers the shared caches with the same default described below.
+
+**If you installed from source,** read on.
 
 Almost everything lives inside the project folder, so deleting that folder
 removes the virtual environment, the datasets, the cached features, the model
