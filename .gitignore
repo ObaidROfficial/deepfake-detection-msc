@@ -41,6 +41,14 @@ results/*
 !results/figures/
 !results/*.csv
 
+# ---- Installer build artefacts ----
+# Compiled by installer/build.py on each platform. The executables are
+# attached to GitHub Releases rather than committed - they are ~20MB each
+# and platform-specific.
+installer/dist/
+installer/build/
+*.spec
+
 # ---- Python ----
 __pycache__/
 *.py[cod]
