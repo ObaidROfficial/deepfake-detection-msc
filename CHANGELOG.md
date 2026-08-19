@@ -63,6 +63,15 @@ The headline change: installing this no longer requires a terminal.
 
 - The executables are unsigned, so Windows SmartScreen and macOS Gatekeeper
   warn on first run. Signing needs a paid certificate.
+- **The macOS installer is Apple Silicon only.** PyInstaller builds for the
+  architecture it runs on, and no Intel Mac was available to build a second
+  binary or a universal one. Intel users should install from source with
+  `setup.sh`; only the compiled installer is architecture-specific, not the
+  application.
+- PyInstaller warns that `--onefile` with a windowed macOS build "clashes with
+  macOS's security" and will be an error in version 7.0. It produces a working
+  binary today, but the macOS build will need moving to `--onedir` before
+  upgrading PyInstaller.
 - The installer has not been tested on a machine with no Python at all. That
   path is verified by reasoning and by simulating the version checks, which is
   weaker than running it — and section 7.3 of the report says so.

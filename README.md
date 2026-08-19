@@ -140,10 +140,18 @@ Download the installer for your platform from the
 [latest release](https://github.com/ObaidROfficial/deepfake-detection-msc/releases/latest)
 and run it:
 
-| Platform | File |
-|---|---|
-| Windows | `OBI-DeepFake-Image-Detector-Setup.exe` |
-| macOS | `OBI-DeepFake-Image-Detector-Setup` |
+| Platform | File | Requires |
+|---|---|---|
+| Windows | `OBI-DeepFake-Image-Detector-Setup.exe` | 64-bit Windows 10 or later |
+| macOS | `OBI-DeepFake-Image-Detector-Setup-macOS-arm64.zip` | **Apple Silicon** (M1 or later), macOS 11+ |
+
+**Intel Macs are not supported.** The macOS binary is built for `arm64` only.
+On an Intel Mac, install from source with `setup.sh` instead — the application
+itself runs fine there, it is only the compiled installer that is
+architecture-specific.
+
+On macOS, unzip first: the executable bit does not survive a plain download,
+which is why that asset is a `.zip` rather than a bare file.
 
 It sets everything up, downloads the trained weights, and puts a shortcut on
 your desktop. **Python is not required beforehand** — if the machine has

@@ -193,6 +193,13 @@ def main() -> int:
             if p.is_file():
                 built.append(p)
                 print(f"  built  {p.name}  ({p.stat().st_size/1e6:.1f} MB)")
+            elif p.suffix == ".app":
+                # macOS windowed builds also emit a .app. PyInstaller itself
+                # warns that this combination clashes with Gatekeeper, and the
+                # plain binary is what gets published, so say so rather than
+                # leaving an unexplained bundle in dist/.
+                print(f"  also   {p.name}  (macOS bundle - not the artefact "
+                      f"to publish)")
 
     print("\nOutput in", HERE / "dist")
     for p in built:
@@ -207,8 +214,20 @@ def main() -> int:
         print("project installed. That is the only way to catch a dependency the")
         print("build environment happened to provide.")
         if system == "Darwin":
-            print("\nmacOS: users must right-click -> Open the first time;")
-            print("Gatekeeper blocks unsigned binaries on double-click.")
+            arch = platform.machine()
+            print(f"\nThis build is {arch} ONLY. PyInstaller targets the")
+            print("architecture it runs on, so an Intel Mac needs its own build")
+            print("(or install from source with setup.sh instead).")
+            print("\nPublish the Setup binary zipped - a bare Unix executable")
+            print("loses its execute bit when downloaded through a browser:")
+            print(f"    cd {HERE / 'dist'}")
+            print(f"    zip OBI-DeepFake-Image-Detector-Setup-macOS-{arch}.zip \\")
+            print("        OBI-DeepFake-Image-Detector-Setup")
+            print("\nPublish the Uninstall binary BARE, under exactly that")
+            print("name - installer.py fetches it by name and chmods it itself.")
+            print("\nWhoever downloads Setup will still need right-click ->")
+            print("Open the first time; Gatekeeper blocks unsigned binaries on")
+            print("a double-click.")
         elif system == "Windows":
             print("\nWindows: SmartScreen warns on first run.")
             print("Users click More info -> Run anyway.")
