@@ -34,6 +34,7 @@ import os
 import platform
 import queue
 import shutil
+import ssl
 import subprocess
 import sys
 import threading
@@ -118,6 +119,67 @@ BG = "#1e1e2e"
 FG = "#e8e8f0"
 ACCENT = "#5a4fcf"
 MUTED = "#9a9ab0"
+HOVER = "#6d61e0"
+NEUTRAL = "#3a3a52"
+NEUTRAL_HOVER = "#4a4a68"
+
+# Tk on macOS renders tk.Button as a native Aqua control and silently ignores
+# bg/fg, which is why the buttons came out grey there while Windows showed the
+# theme colours. A Frame with a Label inside is drawn by Tk itself, so it looks
+# identical on both platforms.
+UI_FONT = ("Segoe UI" if platform.system() == "Windows"
+           else "Helvetica Neue" if platform.system() == "Darwin"
+           else "DejaVu Sans")
+
+
+class FlatButton(tk.Frame):
+    def __init__(self, parent, text, command, bg, hover, fg="white",
+                 bold=False, width=14):
+        super().__init__(parent, bg=bg, cursor="hand2",
+                         highlightthickness=0, bd=0)
+        self.command, self.bg, self.hover = command, bg, hover
+        self.label = tk.Label(
+            self, text=text, bg=bg, fg=fg, padx=18, pady=8, width=width,
+            font=(UI_FONT, 10, "bold" if bold else "normal"))
+        self.label.pack(fill="both", expand=True)
+        for w in (self, self.label):
+            w.bind("<Button-1>", self._click)
+            w.bind("<Enter>", self._enter)
+            w.bind("<Leave>", self._leave)
+
+    def _paint(self, colour):
+        self.configure(bg=colour)
+        self.label.configure(bg=colour)
+
+    def _enter(self, _=None): self._paint(self.hover)
+    def _leave(self, _=None): self._paint(self.bg)
+
+    def _click(self, _=None):
+        if callable(self.command):
+            self.command()
+
+
+
+def use_bundled_certificates() -> None:
+    """
+    Give urllib a certificate bundle it can actually find.
+
+    A frozen application cannot rely on the certificates its build machine had.
+    On macOS this is fatal rather than cosmetic: python.org builds do not read
+    the system keychain, and the bundle contains no etc/openssl/cert.pem, so
+    every HTTPS download dies with CERTIFICATE_VERIFY_FAILED. Windows happened
+    to work only because its Python reads the OS certificate store directly.
+
+    certifi is bundled by installer/build.py for exactly this reason. Falling
+    back to the default context keeps this working when run as a script.
+    """
+    try:
+        import certifi
+        ctx = ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        ctx = ssl.create_default_context()
+    urllib.request.install_opener(
+        urllib.request.build_opener(urllib.request.HTTPSHandler(context=ctx)))
 
 
 def bundled(name: str) -> Path:
@@ -382,20 +444,18 @@ class Installer(tk.Tk):
 
     def _header(self, text, sub=""):
         tk.Label(self.container, text=text, bg=BG, fg=FG,
-                 font=("Segoe UI", 17, "bold"), anchor="w").pack(
+                 font=(UI_FONT, 17, "bold"), anchor="w").pack(
                  fill="x", padx=28, pady=(26, 2))
         if sub:
             tk.Label(self.container, text=sub, bg=BG, fg=MUTED,
-                     font=("Segoe UI", 9), anchor="w").pack(fill="x", padx=28)
+                     font=(UI_FONT, 9), anchor="w").pack(fill="x", padx=28)
 
     def _button(self, parent, text, cmd, primary=False):
-        return tk.Button(
-            parent, text=text, command=cmd, width=12, relief="flat",
-            bg=ACCENT if primary else "#3a3a52", fg="white",
-            activebackground="#6d61e0", activeforeground="white",
-            font=("Segoe UI", 10, "bold" if primary else "normal"),
-            cursor="hand2", borderwidth=0, pady=6,
-        )
+        return FlatButton(
+            parent, text, cmd,
+            bg=ACCENT if primary else NEUTRAL,
+            hover=HOVER if primary else NEUTRAL_HOVER,
+            bold=primary)
 
     # -- screens ------------------------------------------------------------
     def show_welcome(self):
@@ -403,7 +463,7 @@ class Installer(tk.Tk):
         self._header(WELCOME_TITLE, f"Version {APP_VERSION}  -  By {PUBLISHER}")
 
         box = tk.Text(self.container, bg="#252539", fg=FG, relief="flat",
-                      font=("Segoe UI", 10), wrap="word", padx=14, pady=12,
+                      font=(UI_FONT, 10), wrap="word", padx=14, pady=12,
                       height=13)
         box.pack(fill="both", expand=True, padx=28, pady=18)
         box.insert("1.0", WELCOME_TEXT)
@@ -451,7 +511,7 @@ class Installer(tk.Tk):
                 f"minute or two.\n\n")
 
         box = tk.Text(self.container, bg="#252539", fg=FG, relief="flat",
-                      font=("Segoe UI", 10), wrap="word", padx=14, pady=12,
+                      font=(UI_FONT, 10), wrap="word", padx=14, pady=12,
                       height=11)
         box.pack(fill="both", expand=True, padx=28, pady=(16, 10))
         box.insert("1.0",
@@ -492,11 +552,11 @@ class Installer(tk.Tk):
         body.pack(fill="both", expand=True, padx=28, pady=16)
 
         tk.Label(body, text="Install location", bg=BG, fg=FG,
-                 font=("Segoe UI", 10, "bold"), anchor="w").pack(fill="x")
+                 font=(UI_FONT, 10, "bold"), anchor="w").pack(fill="x")
         row = tk.Frame(body, bg=BG)
         row.pack(fill="x", pady=(4, 16))
         tk.Entry(row, textvariable=self.install_dir, bg="#252539", fg=FG,
-                 relief="flat", font=("Segoe UI", 9),
+                 relief="flat", font=(UI_FONT, 9),
                  insertbackground=FG).pack(side="left", fill="x",
                                            expand=True, ipady=5)
         self._button(row, "Browse", self._browse).pack(side="left", padx=(8, 0))
@@ -508,17 +568,17 @@ class Installer(tk.Tk):
         ]:
             tk.Checkbutton(body, text=label, variable=var, bg=BG, fg=FG,
                            selectcolor="#252539", activebackground=BG,
-                           activeforeground=FG, font=("Segoe UI", 10),
+                           activeforeground=FG, font=(UI_FONT, 10),
                            anchor="w", borderwidth=0,
                            highlightthickness=0).pack(fill="x", pady=(6, 0))
             if note:
                 tk.Label(body, text="      " + note, bg=BG, fg=MUTED,
-                         font=("Segoe UI", 8), anchor="w").pack(fill="x")
+                         font=(UI_FONT, 8), anchor="w").pack(fill="x")
 
         tk.Label(body,
                  text="\nAround 700MB will be downloaded. An internet\n"
                       "connection is required during installation.",
-                 bg=BG, fg=MUTED, font=("Segoe UI", 9),
+                 bg=BG, fg=MUTED, font=(UI_FONT, 9),
                  anchor="w", justify="left").pack(fill="x", pady=(14, 0))
 
         nav = tk.Frame(self.container, bg=BG)
@@ -537,7 +597,7 @@ class Installer(tk.Tk):
         self._header(title, sub)
 
         self.status = tk.Label(self.container, text="Starting...", bg=BG, fg=FG,
-                               font=("Segoe UI", 10), anchor="w")
+                               font=(UI_FONT, 10), anchor="w")
         self.status.pack(fill="x", padx=28, pady=(10, 4))
 
         self.bar = ttk.Progressbar(self.container, mode="determinate",
@@ -564,7 +624,7 @@ class Installer(tk.Tk):
         self._clear()
         self._header("Python could not be installed")
         box = tk.Text(self.container, bg="#252539", fg=FG, relief="flat",
-                      font=("Segoe UI", 10), wrap="word", padx=14, pady=12,
+                      font=(UI_FONT, 10), wrap="word", padx=14, pady=12,
                       height=12)
         box.pack(fill="both", expand=True, padx=28, pady=18)
         box.insert("1.0",
@@ -685,7 +745,7 @@ class Installer(tk.Tk):
                     "the project repository.")
 
         box = tk.Text(self.container, bg="#252539", fg=FG, relief="flat",
-                      font=("Segoe UI", 10), wrap="word", padx=14, pady=12,
+                      font=(UI_FONT, 10), wrap="word", padx=14, pady=12,
                       height=11)
         box.pack(fill="both", expand=True, padx=28, pady=18)
         box.insert("1.0", body)
@@ -695,7 +755,7 @@ class Installer(tk.Tk):
             tk.Checkbutton(self.container, text="Open the detector now",
                            variable=self.launch_after, bg=BG, fg=FG,
                            selectcolor="#252539", activebackground=BG,
-                           activeforeground=FG, font=("Segoe UI", 10),
+                           activeforeground=FG, font=(UI_FONT, 10),
                            borderwidth=0, highlightthickness=0).pack(
                            anchor="w", padx=28)
 
@@ -924,13 +984,27 @@ class Installer(tk.Tk):
         if platform.system() == "Windows":
             vbs = target / "_shortcut.vbs"
             lnk = desktop / f"{APP_NAME}.lnk"
-            pyw = target / "venv" / "Scripts" / "pythonw.exe"
             icon = target / "app.ico"
+
+            # Point at the batch launcher rather than pythonw.exe.
+            #
+            # pythonw runs with no window at all, and importing torch plus
+            # loading the model takes 10 to 20 seconds before the browser
+            # opens. To the user that is indistinguishable from nothing
+            # happening - and if it fails, it fails just as silently. The
+            # launcher prints what it is doing, checks its prerequisites, and
+            # leaves the error on screen instead of swallowing it.
+            launcher = target / "Launch Detector.bat"
+            if launcher.exists():
+                tgt, args = launcher, ""
+            else:
+                tgt, args = target / "venv" / "Scripts" / "pythonw.exe", "app.py"
+
             lines = [
                 'Set s = CreateObject("WScript.Shell")',
                 f'Set l = s.CreateShortcut("{lnk}")',
-                f'l.TargetPath = "{pyw}"',
-                'l.Arguments = "app.py"',
+                f'l.TargetPath = "{tgt}"',
+                f'l.Arguments = "{args}"',
                 f'l.WorkingDirectory = "{target}"',
                 f'l.Description = "{APP_NAME}"',
             ]
@@ -957,4 +1031,5 @@ class Installer(tk.Tk):
 
 
 if __name__ == "__main__":
+    use_bundled_certificates()
     Installer().mainloop()

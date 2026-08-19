@@ -10,9 +10,10 @@ The headline change: installing this no longer requires a terminal.
 
 ### Added
 
-- **Graphical installer and uninstaller**, compiled to standalone executables.
-  They handle the Python environment, the dependencies, the model weights and a
-  desktop shortcut, and reverse all of it cleanly.
+- **Graphical installer and uninstaller**, compiled to standalone executables
+  for **Windows and macOS**. They handle the Python environment, the
+  dependencies, the model weights and a desktop shortcut, and reverse all of it
+  cleanly.
 - **Python bootstrap.** If the machine has no suitable interpreter, the
   installer downloads the official Python 3.11.9 from python.org and verifies
   it against the published checksum before running it. Nothing needs to be
@@ -75,7 +76,14 @@ The headline change: installing this no longer requires a terminal.
 - The installer has not been tested on a machine with no Python at all. That
   path is verified by reasoning and by simulating the version checks, which is
   weaker than running it — and section 7.3 of the report says so.
-- macOS binaries must be built on macOS; PyInstaller cannot cross-compile.
+
+### Note for anyone rebuilding this
+
+PyInstaller cannot cross-compile, so each platform's binaries have to be built
+on that platform. The Windows executables were built on Windows and the macOS
+ones on an Apple Silicon Mac. `installer/build.py` and `installer/make_icon.py`
+handle the platform differences themselves — including generating `app.icns`
+via `iconutil`, which only works on macOS.
 
 ## 3.1 — Interface hardening
 

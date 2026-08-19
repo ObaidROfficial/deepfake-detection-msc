@@ -69,6 +69,46 @@ FG = "#e8e8f0"
 ACCENT = "#5a4fcf"
 DANGER = "#c0392b"
 MUTED = "#9a9ab0"
+HOVER = "#6d61e0"
+NEUTRAL = "#3a3a52"
+NEUTRAL_HOVER = "#4a4a68"
+DANGER_HOVER = "#e05545"
+
+# Tk on macOS renders tk.Button as a native Aqua control and silently ignores
+# bg/fg, which is why the buttons came out grey there while Windows showed the
+# theme colours. A Frame with a Label inside is drawn by Tk itself, so it looks
+# identical on both platforms.
+UI_FONT = ("Segoe UI" if platform.system() == "Windows"
+           else "Helvetica Neue" if platform.system() == "Darwin"
+           else "DejaVu Sans")
+
+
+class FlatButton(tk.Frame):
+    def __init__(self, parent, text, command, bg, hover, fg="white",
+                 bold=False, width=14):
+        super().__init__(parent, bg=bg, cursor="hand2",
+                         highlightthickness=0, bd=0)
+        self.command, self.bg, self.hover = command, bg, hover
+        self.label = tk.Label(
+            self, text=text, bg=bg, fg=fg, padx=18, pady=8, width=width,
+            font=(UI_FONT, 10, "bold" if bold else "normal"))
+        self.label.pack(fill="both", expand=True)
+        for w in (self, self.label):
+            w.bind("<Button-1>", self._click)
+            w.bind("<Enter>", self._enter)
+            w.bind("<Leave>", self._leave)
+
+    def _paint(self, colour):
+        self.configure(bg=colour)
+        self.label.configure(bg=colour)
+
+    def _enter(self, _=None): self._paint(self.hover)
+    def _leave(self, _=None): self._paint(self.bg)
+
+    def _click(self, _=None):
+        if callable(self.command):
+            self.command()
+
 
 
 def bundled(name: str) -> Path:
@@ -224,21 +264,17 @@ class Uninstaller(tk.Tk):
 
     def _header(self, text, sub=""):
         tk.Label(self.container, text=text, bg=BG, fg=FG,
-                 font=("Segoe UI", 17, "bold"), anchor="w").pack(
+                 font=(UI_FONT, 17, "bold"), anchor="w").pack(
                  fill="x", padx=28, pady=(26, 2))
         if sub:
             tk.Label(self.container, text=sub, bg=BG, fg=MUTED,
-                     font=("Segoe UI", 9), anchor="w").pack(fill="x", padx=28)
+                     font=(UI_FONT, 9), anchor="w").pack(fill="x", padx=28)
 
     def _button(self, parent, text, cmd, style="normal"):
-        colours = {"normal": "#3a3a52", "primary": ACCENT, "danger": DANGER}
-        return tk.Button(
-            parent, text=text, command=cmd, width=12, relief="flat",
-            bg=colours[style], fg="white", activeforeground="white",
-            activebackground="#6d61e0" if style != "danger" else "#e05545",
-            font=("Segoe UI", 10, "bold" if style != "normal" else "normal"),
-            cursor="hand2", borderwidth=0, pady=6,
-        )
+        base  = {"normal": NEUTRAL, "primary": ACCENT, "danger": DANGER}
+        hover = {"normal": NEUTRAL_HOVER, "primary": HOVER, "danger": DANGER_HOVER}
+        return FlatButton(parent, text, cmd, bg=base[style],
+                          hover=hover[style], bold=style != "normal")
 
     # -- screens ------------------------------------------------------------
     def show_refuse(self, reason: str):
@@ -247,7 +283,7 @@ class Uninstaller(tk.Tk):
         self._header("Nothing has been deleted",
                      "This does not look like something I should remove.")
         box = tk.Text(self.container, bg="#252539", fg=FG, relief="flat",
-                      font=("Segoe UI", 10), wrap="word", padx=14, pady=12)
+                      font=(UI_FONT, 10), wrap="word", padx=14, pady=12)
         box.pack(fill="both", expand=True, padx=28, pady=18)
         box.insert("1.0",
                    reason
@@ -271,7 +307,7 @@ class Uninstaller(tk.Tk):
                      f"Version {APP_VERSION}  -  By {PUBLISHER}")
 
         box = tk.Text(self.container, bg="#252539", fg=FG, relief="flat",
-                      font=("Segoe UI", 10), wrap="word", padx=14, pady=12,
+                      font=(UI_FONT, 10), wrap="word", padx=14, pady=12,
                       height=12)
         box.pack(fill="both", expand=True, padx=28, pady=(16, 10))
         box.insert("1.0", UNINSTALL_TEXT)
@@ -280,20 +316,20 @@ class Uninstaller(tk.Tk):
         size = dir_size(self.root_dir)
         tk.Label(self.container,
                  text=f"Location:  {self.root_dir}\nSpace to reclaim:  {human(size)}",
-                 bg=BG, fg=MUTED, font=("Segoe UI", 9), anchor="w",
+                 bg=BG, fg=MUTED, font=(UI_FONT, 9), anchor="w",
                  justify="left").pack(fill="x", padx=28)
 
         tk.Checkbutton(
             self.container,
             text="Also clear shared PyTorch and Hugging Face caches",
             variable=self.remove_caches, bg=BG, fg=FG, selectcolor="#252539",
-            activebackground=BG, activeforeground=FG, font=("Segoe UI", 9),
+            activebackground=BG, activeforeground=FG, font=(UI_FONT, 9),
             borderwidth=0, highlightthickness=0, anchor="w").pack(
             fill="x", padx=26, pady=(12, 0))
         tk.Label(self.container,
                  text="      Other Python software on this computer uses these too,\n"
                       "      and would have to download them again.",
-                 bg=BG, fg=MUTED, font=("Segoe UI", 8), anchor="w",
+                 bg=BG, fg=MUTED, font=(UI_FONT, 8), anchor="w",
                  justify="left").pack(fill="x", padx=28)
 
         nav = tk.Frame(self.container, bg=BG)
@@ -318,7 +354,7 @@ class Uninstaller(tk.Tk):
         self._clear()
         self._header("Finished" if ok else "Could not finish")
         box = tk.Text(self.container, bg="#252539", fg=FG, relief="flat",
-                      font=("Segoe UI", 10), wrap="word", padx=14, pady=12)
+                      font=(UI_FONT, 10), wrap="word", padx=14, pady=12)
         box.pack(fill="both", expand=True, padx=28, pady=18)
         box.insert("1.0", DONE_TEXT if ok else
                    "Some files could not be removed:\n\n" + message +

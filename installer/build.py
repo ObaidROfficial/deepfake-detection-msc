@@ -100,6 +100,18 @@ def check_tkinter() -> bool:
         return False
 
 
+def check_certifi() -> bool:
+    try:
+        import certifi  # noqa: F401
+        return True
+    except ImportError:
+        print("certifi is not installed, and the frozen installer needs it to")
+        print("verify HTTPS downloads - without it the macOS build fails with")
+        print("CERTIFICATE_VERIFY_FAILED on every download.\n")
+        print(f'  "{sys.executable}" -m pip install certifi\n')
+        return False
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--console", action="store_true",
@@ -108,7 +120,7 @@ def main() -> int:
                     help="build only one of the two executables")
     args = ap.parse_args()
 
-    if not check_pyinstaller() or not check_tkinter():
+    if not check_pyinstaller() or not check_tkinter() or not check_certifi():
         return 1
 
     system = platform.system()
@@ -159,6 +171,14 @@ def main() -> int:
             "--hidden-import", "tkinter.messagebox",
             "--hidden-import", "tkinter.ttk",
         ]
+
+        # Certificates. Only the installer downloads anything, but bundling
+        # both keeps the two builds identical. Without this the macOS build
+        # fails every HTTPS request with CERTIFICATE_VERIFY_FAILED: a frozen
+        # app has no cert.pem, and python.org's macOS Python does not fall back
+        # to the system keychain the way the Windows build falls back to the
+        # Windows certificate store.
+        cmd += ["--hidden-import", "certifi", "--collect-data", "certifi"]
 
         # Icon, if one has been made. Two separate things are needed: --icon
         # sets the image Explorer shows for the .exe, while --add-data puts a

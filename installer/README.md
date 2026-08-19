@@ -98,6 +98,28 @@ PyInstaller cannot cross-compile, so a Windows `.exe` has to be built on
 Windows and a macOS binary on macOS. Output goes to `installer/dist/`, which is
 gitignored — the executables are attached to a release rather than committed.
 
+### On macOS
+
+```bash
+git pull
+python3 -m pip install pyinstaller pillow
+python3 installer/make_logo.py      # also writes app.icns, via iconutil
+python3 installer/build.py
+```
+
+`make_logo.py` must be run on the Mac: `app.icns` is built with `iconutil`,
+which does not exist on Windows, so the Windows build has no macOS icon to use.
+
+The two binaries carry no file extension — `OBI-DeepFake-Image-Detector-Setup`
+and `-Uninstall` — which is what `installer.py` expects to download on a
+non-Windows machine.
+
+GitHub release assets lose their execute bit, so anyone downloading the Setup
+binary has to `chmod +x` it before it will run. The installer restores that
+itself on the uninstaller after fetching it, so only the Setup binary needs it
+by hand. Release assets can be added to an existing release at any time, so the
+macOS binaries do not have to hold up publishing the Windows ones.
+
 Each one is around 20MB. They stay that small because only the installer is
 compiled and it imports nothing beyond tkinter and the standard library.
 
