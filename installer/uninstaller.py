@@ -37,6 +37,8 @@ from tkinter import messagebox, ttk
 # ---------------------------------------------------------------------------
 
 APP_NAME = "OBI DeepFake Image Detector"
+APP_VERSION = "3.2"          # keep in step with installer.py
+PUBLISHER = "Obaid"
 
 UNINSTALL_TEXT = """\
 Thank you for trying the OBI DeepFake Image Detector. I hope you found it
@@ -69,6 +71,45 @@ DANGER = "#c0392b"
 MUTED = "#9a9ab0"
 
 
+def bundled(name: str) -> Path:
+    """Beside this script, or inside the frozen bundle - see installer.py."""
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    return base / name
+
+
+def apply_window_icon(window) -> None:
+    """Set the title-bar icon, quietly doing nothing if there isn't one yet."""
+    try:
+        ico = bundled("app.ico")
+        if ico.exists():
+            window.iconbitmap(default=str(ico))
+    except Exception:
+        pass
+
+
+def desktop_dir() -> Path:
+    """
+    The user's real Desktop - see the matching helper in installer.py.
+
+    Path.home()/"Desktop" is wrong wherever OneDrive or a roaming profile has
+    redirected the folder, which would leave the shortcut behind on uninstall.
+    """
+    if platform.system() == "Windows":
+        try:
+            import winreg
+            key = (r"Software\Microsoft\Windows\CurrentVersion"
+                   r"\Explorer\User Shell Folders")
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key) as k:
+                raw, _ = winreg.QueryValueEx(k, "Desktop")
+            resolved = Path(os.path.expandvars(raw))
+            if resolved.is_dir():
+                return resolved
+        except Exception:
+            pass
+    fallback = Path.home() / "Desktop"
+    return fallback if fallback.is_dir() else Path.home()
+
+
 def app_root() -> Path:
     """
     Where the application lives.
@@ -79,6 +120,54 @@ def app_root() -> Path:
     if getattr(sys, "frozen", False):
         return Path(sys.executable).resolve().parent
     return Path(__file__).resolve().parent.parent
+
+
+# A working copy has a .git directory. A downloaded archive never does, because
+# GitHub strips it - which makes it the one marker that reliably separates a
+# source checkout from an installation.
+#
+# Earlier versions of this guard also looked for docs/, notebooks/ and
+# results/. That was wrong: the installer used to extract the entire archive,
+# so a legitimate install contained all three and would have refused to
+# uninstall itself. The installer now copies only the runtime files, but the
+# guard should not depend on that - if the two ever drift apart the failure is
+# silent, and it fails in the direction of "cannot uninstall".
+SOURCE_MARKER = ".git"
+
+# What an installation looks like from the outside.
+INSTALL_MARKERS = ("app.py", "venv", "models")
+
+
+def refuse_reason(root: Path) -> str | None:
+    """
+    Why this folder must not be deleted, or None if it is safe to proceed.
+
+    Two separate checks. The first stops the uninstaller eating a clone: run
+    this as a script from a checkout - exactly what you would do to test it -
+    and app_root() resolves to the repository, source and git history included.
+    Parent directories are checked too, because the compiled uninstaller sits
+    in installer/dist/ during development.
+
+    The second is the opposite worry: a folder that is not an installation at
+    all, where deleting everything would be equally unwelcome.
+    """
+    for depth, cand in enumerate([root, *root.parents]):
+        if depth > 3:
+            break
+        if (cand / SOURCE_MARKER).exists():
+            where = "this folder" if cand == root else f"{cand}"
+            return (f"{where} is a git working copy.\n\n"
+                    f"That means it holds the project's source, the written "
+                    f"report and its version history, not just the "
+                    f"application. Uninstalling would delete all of it.")
+
+    present = [m for m in INSTALL_MARKERS if (root / m).exists()]
+    if not present:
+        return (f"{root}\n\ndoes not look like an installation. None of "
+                f"{', '.join(INSTALL_MARKERS)} are here, so there is nothing "
+                f"recognisable to remove and deleting the folder could take "
+                f"something else with it.")
+    return None
 
 
 def human(n: int) -> str:
@@ -106,8 +195,9 @@ class Uninstaller(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title(f"Uninstall {APP_NAME}")
-        self.geometry("580x460")
-        self.resizable(False, False)
+        apply_window_icon(self)
+        self.geometry("600x580")
+        self.minsize(560, 520)
         self.configure(bg=BG)
 
         self.root_dir = app_root()
@@ -151,9 +241,34 @@ class Uninstaller(tk.Tk):
         )
 
     # -- screens ------------------------------------------------------------
-    def show_confirm(self):
+    def show_refuse(self, reason: str):
+        """Shown instead of the confirm screen when deleting would be wrong."""
         self._clear()
-        self._header(f"Uninstall {APP_NAME}")
+        self._header("Nothing has been deleted",
+                     "This does not look like something I should remove.")
+        box = tk.Text(self.container, bg="#252539", fg=FG, relief="flat",
+                      font=("Segoe UI", 10), wrap="word", padx=14, pady=12)
+        box.pack(fill="both", expand=True, padx=28, pady=18)
+        box.insert("1.0",
+                   reason
+                   + "\n\nIf you meant to remove a source checkout, use "
+                     "uninstall.ps1 or uninstall.sh in the project root - they "
+                     "are written for that. This uninstaller is for the copy "
+                     "placed by the graphical installer.")
+        box.configure(state="disabled")
+        nav = tk.Frame(self.container, bg=BG)
+        nav.pack(side="bottom", fill="x", padx=28, pady=(0, 22))
+        self._button(nav, "Close", self.destroy, style="primary").pack(side="right")
+
+    def show_confirm(self):
+        reason = refuse_reason(self.root_dir)
+        if reason:
+            self.show_refuse(reason)
+            return
+
+        self._clear()
+        self._header(f"Uninstall {APP_NAME}",
+                     f"Version {APP_VERSION}  -  By {PUBLISHER}")
 
         box = tk.Text(self.container, bg="#252539", fg=FG, relief="flat",
                       font=("Segoe UI", 10), wrap="word", padx=14, pady=12,
@@ -182,7 +297,7 @@ class Uninstaller(tk.Tk):
                  justify="left").pack(fill="x", padx=28)
 
         nav = tk.Frame(self.container, bg=BG)
-        nav.pack(fill="x", padx=28, pady=(16, 22))
+        nav.pack(side="bottom", fill="x", padx=28, pady=(16, 22))
         self._button(nav, "Keep it", self.destroy).pack(side="right", padx=(8, 0))
         self._button(nav, "Uninstall", self.start, style="danger").pack(side="right")
 
@@ -212,7 +327,7 @@ class Uninstaller(tk.Tk):
                    str(self.root_dir))
         box.configure(state="disabled")
         nav = tk.Frame(self.container, bg=BG)
-        nav.pack(fill="x", padx=28, pady=(0, 22))
+        nav.pack(side="bottom", fill="x", padx=28, pady=(0, 22))
         self._button(nav, "Close", self.destroy, style="primary").pack(side="right")
 
     # -- worker -------------------------------------------------------------
@@ -264,8 +379,10 @@ class Uninstaller(tk.Tk):
             root = self.root_dir
             self.log(f"Target: {root}\n")
 
-            # Desktop shortcut first - cheap, and confirms we have the right app
-            desktop = Path.home() / "Desktop"
+            # Desktop shortcut first - cheap, and confirms we have the right app.
+            # Must resolve the Desktop the same way the installer did, or a
+            # redirected Desktop leaves the shortcut behind after uninstalling.
+            desktop = desktop_dir()
             for name in (f"{APP_NAME}.lnk", f"{APP_NAME}.command"):
                 self._rm(desktop / name, f"desktop shortcut ({name})")
 

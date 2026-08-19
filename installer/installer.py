@@ -48,8 +48,8 @@ from tkinter import filedialog, messagebox, ttk
 # ---------------------------------------------------------------------------
 
 APP_NAME = "OBI DeepFake Image Detector"
-APP_VERSION = "3.1"
-PUBLISHER = "Muhammad Obaid Ur Rehman"
+APP_VERSION = "3.2"
+PUBLISHER = "Obaid"
 
 WELCOME_TITLE = f"Welcome to {APP_NAME}"
 
@@ -80,6 +80,9 @@ browser when you launch it.
 The first time you classify an image it may take a few seconds while the model
 loads. After that it is quick.
 
+To remove it later, run the uninstaller in the folder you installed to. It
+takes the application, its Python environment and the shortcut with it.
+
 Thank you for trying it. Bug reports and suggestions are welcome at
 github.com/ObaidROfficial/deepfake-detection-msc/issues"""
 
@@ -92,10 +95,78 @@ WEIGHTS = ["mobilenet_v2_best.pt"]          # only the primary model by default
 OPTIONAL_WEIGHTS = ["efficientnet_b0_best.pt"]
 PYTHON_DOWNLOAD = "https://www.python.org/downloads/"
 
+# The compiled uninstaller, published as a release asset. It has to be the
+# frozen executable rather than the .py: the uninstaller deletes the virtual
+# environment, and an interpreter cannot remove the files it is running from.
+UNINSTALLER = ("OBI-DeepFake-Image-Detector-Uninstall.exe"
+               if platform.system() == "Windows"
+               else "OBI-DeepFake-Image-Detector-Uninstall")
+
+# What actually gets installed. The repository archive also carries the report,
+# the notebooks, every generated figure and the results CSVs - none of which an
+# end user needs, and together far larger than the application itself. Copying
+# only the runtime files keeps the install lean and, just as usefully, keeps a
+# real installation looking nothing like a source checkout.
+RUNTIME_ITEMS = (
+    "app.py", "src", "config.yaml",
+    "requirements.txt", "requirements-lock.txt",
+    "README.md", "LICENSE",
+    "run.ps1", "run.sh", "Launch Detector.bat",
+)
+
 BG = "#1e1e2e"
 FG = "#e8e8f0"
 ACCENT = "#5a4fcf"
 MUTED = "#9a9ab0"
+
+
+def bundled(name: str) -> Path:
+    """
+    Locate a file that sits beside this script, or inside the frozen bundle.
+
+    PyInstaller unpacks --add-data files to a temporary directory recorded in
+    sys._MEIPASS, so the path differs between running as a script and running
+    as an executable.
+    """
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    return base / name
+
+
+def apply_window_icon(window) -> None:
+    """Set the title-bar icon, quietly doing nothing if there isn't one yet."""
+    try:
+        ico = bundled("app.ico")
+        if ico.exists():
+            window.iconbitmap(default=str(ico))
+    except Exception:
+        pass    # cosmetic only - never let this stop the installer
+
+
+def desktop_dir() -> Path:
+    """
+    The user's real Desktop.
+
+    Path.home()/"Desktop" is wrong on any machine where OneDrive, Dropbox or a
+    roaming profile has redirected the folder - and it fails silently, because
+    the shortcut lands in a directory the user never opens. Worse, creating it
+    makes a phantom C:\\Users\\<name>\\Desktop that looks legitimate.
+
+    Windows records the true location in the registry, so ask it.
+    """
+    if platform.system() == "Windows":
+        try:
+            import winreg
+            key = (r"Software\Microsoft\Windows\CurrentVersion"
+                   r"\Explorer\User Shell Folders")
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key) as k:
+                raw, _ = winreg.QueryValueEx(k, "Desktop")
+            resolved = Path(os.path.expandvars(raw))
+            if resolved.is_dir():
+                return resolved
+        except Exception:
+            pass
+    fallback = Path.home() / "Desktop"
+    return fallback if fallback.is_dir() else Path.home()
 
 
 def default_install_dir() -> Path:
@@ -277,8 +348,9 @@ class Installer(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title(f"{APP_NAME} Setup")
-        self.geometry("620x480")
-        self.resizable(False, False)
+        apply_window_icon(self)
+        self.geometry("640x600")
+        self.minsize(560, 520)
         self.configure(bg=BG)
 
         self.install_dir = tk.StringVar(value=str(default_install_dir()))
@@ -328,7 +400,7 @@ class Installer(tk.Tk):
     # -- screens ------------------------------------------------------------
     def show_welcome(self):
         self._clear()
-        self._header(WELCOME_TITLE, f"Version {APP_VERSION}  -  {PUBLISHER}")
+        self._header(WELCOME_TITLE, f"Version {APP_VERSION}  -  By {PUBLISHER}")
 
         box = tk.Text(self.container, bg="#252539", fg=FG, relief="flat",
                       font=("Segoe UI", 10), wrap="word", padx=14, pady=12,
@@ -338,7 +410,7 @@ class Installer(tk.Tk):
         box.configure(state="disabled")
 
         nav = tk.Frame(self.container, bg=BG)
-        nav.pack(fill="x", padx=28, pady=(0, 22))
+        nav.pack(side="bottom", fill="x", padx=28, pady=(0, 22))
         self._button(nav, "Cancel", self.destroy).pack(side="right", padx=(8, 0))
         self._button(nav, "Next", self._after_welcome, primary=True).pack(side="right")
 
@@ -395,7 +467,7 @@ class Installer(tk.Tk):
         box.configure(state="disabled")
 
         nav = tk.Frame(self.container, bg=BG)
-        nav.pack(fill="x", padx=28, pady=(10, 22))
+        nav.pack(side="bottom", fill="x", padx=28, pady=(10, 22))
         self._button(nav, "Cancel", self.destroy).pack(side="right", padx=(8, 0))
         self._button(nav, f"Install Python {PY_VERSION}", self.start_python_install,
                      primary=True).pack(side="right")
@@ -450,7 +522,7 @@ class Installer(tk.Tk):
                  anchor="w", justify="left").pack(fill="x", pady=(14, 0))
 
         nav = tk.Frame(self.container, bg=BG)
-        nav.pack(fill="x", padx=28, pady=(0, 22))
+        nav.pack(side="bottom", fill="x", padx=28, pady=(0, 22))
         self._button(nav, "Cancel", self.destroy).pack(side="right", padx=(8, 0))
         self._button(nav, "Install", self.start_install, primary=True).pack(side="right")
         self._button(nav, "Back", self.show_welcome).pack(side="left")
@@ -479,7 +551,7 @@ class Installer(tk.Tk):
         self.logbox.configure(state="disabled")
 
         nav = tk.Frame(self.container, bg=BG)
-        nav.pack(fill="x", padx=28, pady=(0, 22))
+        nav.pack(side="bottom", fill="x", padx=28, pady=(0, 22))
         self.cancel_btn = self._button(nav, "Cancel", self._cancel)
         self.cancel_btn.pack(side="right")
 
@@ -502,7 +574,7 @@ class Installer(tk.Tk):
                    "computer by this step.")
         box.configure(state="disabled")
         nav = tk.Frame(self.container, bg=BG)
-        nav.pack(fill="x", padx=28, pady=(0, 22))
+        nav.pack(side="bottom", fill="x", padx=28, pady=(0, 22))
         self._button(nav, "Close", self.destroy).pack(side="right", padx=(8, 0))
         self._button(nav, "Try again", self.show_python_required,
                      primary=True).pack(side="right")
@@ -628,7 +700,7 @@ class Installer(tk.Tk):
                            anchor="w", padx=28)
 
         nav = tk.Frame(self.container, bg=BG)
-        nav.pack(fill="x", padx=28, pady=(12, 22))
+        nav.pack(side="bottom", fill="x", padx=28, pady=(12, 22))
         self._button(nav, "Close", self._finish_close, primary=True).pack(side="right")
 
     def _finish_close(self):
@@ -749,14 +821,30 @@ class Installer(tk.Tk):
             with zipfile.ZipFile(zip_path) as z:
                 z.extractall(target / "_extract")
             inner = next((target / "_extract").iterdir())
-            for item in inner.iterdir():
+
+            copied, skipped = [], []
+            for item in sorted(inner.iterdir()):
+                if item.name not in RUNTIME_ITEMS:
+                    skipped.append(item.name)
+                    continue
                 dst = target / item.name
                 if dst.exists():
                     shutil.rmtree(dst) if dst.is_dir() else dst.unlink()
                 shutil.move(str(item), str(dst))
+                copied.append(item.name)
+
+            # The icon, for the desktop shortcut. Lifted out of installer/ so
+            # the install does not carry the build tooling as well.
+            src_icon = inner / "installer" / "app.ico"
+            if src_icon.exists():
+                shutil.move(str(src_icon), str(target / "app.ico"))
+                copied.append("app.ico")
+
             shutil.rmtree(target / "_extract", ignore_errors=True)
             zip_path.unlink(missing_ok=True)
-            self.log("  extracted")
+            self.log(f"  installed {len(copied)} items")
+            if skipped:
+                self.log(f"  skipped (not needed to run): {', '.join(skipped)}")
 
             # 3. Virtual environment
             self._base, self._span = 20, 5
@@ -788,14 +876,29 @@ class Installer(tk.Tk):
             for w in wanted:
                 self._download(f"{RELEASE}/{w}", models / w, w)
 
-            # 6. Shortcut
+            # 6. Uninstaller. Not fatal if it is missing - a user who cannot
+            #    uninstall is annoyed, whereas a failed install is useless.
+            self.progress(93, "Fetching the uninstaller")
+            self._base, self._span = 93, 3
+            try:
+                dest = target / UNINSTALLER
+                self._download(f"{RELEASE}/{UNINSTALLER}", dest, "uninstaller")
+                if platform.system() != "Windows":
+                    dest.chmod(0o755)
+            except Exception as e:
+                self.log(f"Could not fetch the uninstaller: {e}")
+                self.log("Remove this folder by hand if you want it gone: "
+                         f"{target}")
+
+            # 7. Shortcut
             self.progress(96, "Finishing up")
             if self.create_shortcut.get():
                 try:
-                    self._make_shortcut(target)
-                    self.log("Desktop shortcut created")
+                    made = self._make_shortcut(target)
+                    self.log(f"Desktop shortcut created: {made}")
                 except Exception as e:
                     self.log(f"Could not create shortcut: {e}")
+                    self.log(f"Launch it directly instead: {target / 'app.py'}")
 
             self.progress(100, "Done")
             self.log("\nInstallation complete.")
@@ -805,28 +908,52 @@ class Installer(tk.Tk):
             self.log(f"\nFAILED: {e}")
             self.log_queue.put(("error", e))
 
-    def _make_shortcut(self, target: Path):
-        desktop = Path.home() / "Desktop"
-        desktop.mkdir(exist_ok=True)
+    def _make_shortcut(self, target: Path) -> Path:
+        """
+        Create the desktop shortcut and return where it went.
+
+        Returns the path rather than nothing, and raises if the file is not
+        there afterwards. The previous version ran cscript with check=False and
+        then logged success unconditionally, so it reported a shortcut it had
+        not made.
+        """
+        desktop = desktop_dir()
+        if not desktop.is_dir():
+            raise RuntimeError(f"Desktop folder not found at {desktop}")
+
         if platform.system() == "Windows":
             vbs = target / "_shortcut.vbs"
             lnk = desktop / f"{APP_NAME}.lnk"
             pyw = target / "venv" / "Scripts" / "pythonw.exe"
-            vbs.write_text(
-                'Set s = CreateObject("WScript.Shell")\n'
-                f'Set l = s.CreateShortcut("{lnk}")\n'
-                f'l.TargetPath = "{pyw}"\n'
-                f'l.Arguments = "app.py"\n'
-                f'l.WorkingDirectory = "{target}"\n'
-                'l.Save\n', encoding="utf-8")
-            subprocess.run(["cscript", "//nologo", str(vbs)], check=False)
+            icon = target / "app.ico"
+            lines = [
+                'Set s = CreateObject("WScript.Shell")',
+                f'Set l = s.CreateShortcut("{lnk}")',
+                f'l.TargetPath = "{pyw}"',
+                'l.Arguments = "app.py"',
+                f'l.WorkingDirectory = "{target}"',
+                f'l.Description = "{APP_NAME}"',
+            ]
+            if icon.exists():
+                lines.append(f'l.IconLocation = "{icon}"')
+            lines += ['l.Save', '']
+            vbs.write_text("\r\n".join(lines), encoding="utf-8")
+            r = subprocess.run(["cscript", "//nologo", str(vbs)],
+                               capture_output=True, text=True)
             vbs.unlink(missing_ok=True)
+            if not lnk.exists():
+                detail = (r.stderr or r.stdout or "no output").strip()
+                raise RuntimeError(f"cscript did not create {lnk}: {detail}")
+            return lnk
         else:
             cmd = desktop / f"{APP_NAME}.command"
             cmd.write_text(
                 f'#!/bin/bash\ncd "{target}"\n'
                 f'"{target}/venv/bin/python" app.py\n', encoding="utf-8")
             cmd.chmod(0o755)
+            if not cmd.exists():
+                raise RuntimeError(f"could not write {cmd}")
+            return cmd
 
 
 if __name__ == "__main__":

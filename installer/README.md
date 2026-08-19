@@ -17,11 +17,17 @@ programs are for anybody else.
 1. Looks for a Python between 3.9 and 3.13. If there is none, it offers to
    download and install the official Python 3.11.9 from python.org.
 2. Asks where to install and whether to add the second model.
-3. Downloads the application source from GitHub.
+3. Downloads the repository archive and copies out **only the runtime files** —
+   `RUNTIME_ITEMS` in `installer.py`. The archive also carries the report, the
+   notebooks, every figure and the results CSVs, which together dwarf the
+   application and are of no use to someone who just wants to classify an image.
 4. Creates a virtual environment and installs the CPU build of PyTorch plus the
    other dependencies.
 5. Downloads the trained weights from the latest release.
-6. Creates a desktop shortcut and offers to launch.
+6. Downloads the compiled uninstaller into the install folder. A failure here
+   is logged but does not abort the install — a user who cannot uninstall is
+   inconvenienced, whereas a failed install leaves them with nothing.
+7. Creates a desktop shortcut and offers to launch.
 
 Roughly 700MB is downloaded in total, nearly all of it PyTorch.
 
@@ -114,8 +120,18 @@ rather than left to surprise anyone.
 
 ## The uninstaller
 
-Installed alongside the application and compiled separately, so it still works
-after the virtual environment it is deleting has gone.
+Downloaded into the install folder by the installer, and compiled separately so
+it still works after the virtual environment it is deleting has gone. It has to
+be the frozen executable rather than the `.py`: an interpreter cannot delete
+the files it is currently running from.
+
+**It refuses to run against a git working copy.** Run it as a script from a
+clone and it resolves its target as the repository itself — source, report and
+history included. It checks the target and three levels of parent directory for
+a `.git` folder, which is the one marker that separates a checkout from an
+install, since GitHub's archive strips it. It also refuses on any folder that
+does not contain at least one of `app.py`, `venv` or `models`, on the grounds
+that a folder it cannot recognise is not one it should empty.
 
 It removes the application folder, the venv, the weights and the shortcut. It
 leaves the shared PyTorch and Hugging Face caches alone unless the user ticks
