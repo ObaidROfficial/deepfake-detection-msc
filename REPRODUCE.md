@@ -123,7 +123,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-pip install pillow pyyaml numpy pandas opencv-python gradio
+pip install pillow pyyaml numpy pandas opencv-python
 ```
 
 Then download `mobilenet_v2_best.pt` from the
@@ -140,7 +140,7 @@ install:
 .\run.ps1        # or ./run.sh on macOS/Linux
 ```
 
-Opens at `http://127.0.0.1:7860`. Drag an image in and it classifies on upload.
+Opens its own window. Choose an image and it classifies immediately.
 
 ### 3. Or use the command line
 
@@ -393,7 +393,7 @@ Three things are written **outside** the project folder and survive that:
 | Path | What | Size |
 |---|---|---|
 | `~/.cache/torch/hub/checkpoints` | ImageNet weights torchvision downloads on first use | ~35 MB |
-| `~/.cache/huggingface` | pulled in by Gradio's dependencies | varies |
+| `~/.cache/huggingface` | left by older versions that used Gradio | varies |
 | `~/.kaggle/kaggle.json` | only if you created it for the datasets | 1 KB |
 
 An uninstall script handles all of this:

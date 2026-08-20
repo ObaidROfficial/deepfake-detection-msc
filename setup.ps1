@@ -96,7 +96,7 @@ Ok "PyTorch installed"
 
 if ($Minimal) {
     Write-Host "    Installing demo dependencies only..."
-    & $vpy -m pip install pillow pyyaml numpy pandas "opencv-python<5" gradio --quiet
+    & $vpy -m pip install pillow pyyaml numpy pandas "opencv-python<5" --quiet
     Ok "Demo dependencies installed (experiments will not run - omit -Minimal for those)"
 } else {
     Write-Host "    Installing full requirements..."
@@ -141,9 +141,9 @@ try:
 except ImportError:
     print("    opencv missing - face cropping will be skipped")
 try:
-    import gradio; print(f"    gradio {gradio.__version__} - GUI available")
+    import tkinter; print("    tkinter - desktop interface available")
 except ImportError:
-    print("    gradio missing - GUI unavailable (command line still works)")
+    print("    tkinter missing - desktop interface unavailable (command line still works)")
 from pathlib import Path
 w = sorted(p.name for p in Path("models").glob("*_best.pt"))
 print(f"    weights found: {w if w else 'NONE - download from Releases'}")
@@ -168,8 +168,7 @@ Write-Host @"
 
   Other options:
 
-      .\run.ps1 -Share                  temporary public link
-      .\run.ps1 -Image photo.jpg        classify one image, no GUI
+      .\run.ps1 -Image photo.jpg        classify one image, no window
 
   Or do it manually if you prefer:
 

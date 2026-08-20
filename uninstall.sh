@@ -13,7 +13,7 @@
 #
 #   ~/.cache/torch/hub/checkpoints   ImageNet weights torchvision downloads
 #                                    on first use (~35MB for both models)
-#   ~/.cache/huggingface             pulled in by Gradio's dependencies
+#   ~/.cache/huggingface             left by older versions
 #   ~/.kaggle/kaggle.json            only if you created it for the datasets
 #
 # The shared caches are NOT removed by default. They are shared with any other

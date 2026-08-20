@@ -77,7 +77,7 @@ project.
 
 I am grateful to the maintainers of the datasets used here — NVIDIA for the
 Flickr-Faces-HQ dataset, and Le et al. for OpenForensics — and to the
-maintainers of PyTorch, scikit-learn, scikit-image and Gradio, without which a
+maintainers of PyTorch, scikit-learn and scikit-image, without which a
 project of this scope would not have been feasible on the hardware available.
 
 ---

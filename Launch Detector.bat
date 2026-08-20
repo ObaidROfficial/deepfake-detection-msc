@@ -32,10 +32,10 @@ if not exist "models\mobilenet_v2_best.pt" (
 
 echo.
 echo   Starting the OBI DeepFake Image Detector...
-echo   Your browser should open at http://127.0.0.1:7860
+echo   The window opens in a few seconds while the model loads.
 echo.
-echo   Leave this window open while you use it.
-echo   Close it, or press Ctrl+C, to stop the detector.
+echo   This console stays open behind the app.
+echo   Closing it, or pressing Ctrl+C, stops the detector.
 echo.
 
 "venv\Scripts\python.exe" app.py %*

@@ -212,8 +212,8 @@ Then:
 .\run.ps1        # or ./run.sh on macOS/Linux
 ```
 
-Either way the detector opens in your browser at http://127.0.0.1:7860. Drag an
-image in and it returns a REAL or FAKE verdict with a confidence percentage.
+Either way the detector opens in its own window. Choose an image and it
+returns a REAL or FAKE verdict with a confidence percentage.
 
 The interface warns when an input falls outside the conditions the model was
 validated on, and states where the detector is known to fail. That is

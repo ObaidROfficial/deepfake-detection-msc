@@ -1,7 +1,6 @@
-# Launch the graphical interface - Windows.
+# Launch the detector window - Windows.
 #
-#   .\run.ps1                      start the web interface
-#   .\run.ps1 -Share               also create a temporary public link
+#   .\run.ps1                      open the detector window
 #   .\run.ps1 -Image photo.jpg     classify one image on the command line
 #
 # Uses the virtual environment's Python directly, so there is no need to
@@ -9,10 +8,8 @@
 # this step.
 
 param(
-    [switch]$Share,
     [string]$Image,
-    [string]$Folder,
-    [int]$Port = 7860
+    [string]$Folder
 )
 
 $ErrorActionPreference = "Continue"
@@ -38,8 +35,7 @@ if (-not (Get-ChildItem "models\*_best.pt" -ErrorAction SilentlyContinue)) {
 if ($Image)  { & $py src\predict.py --image  $Image;  exit $LASTEXITCODE }
 if ($Folder) { & $py src\predict.py --folder $Folder; exit $LASTEXITCODE }
 
-Write-Host "Starting the interface..." -ForegroundColor Green
-Write-Host "(Ctrl+C to stop)"
-$args = @("app.py", "--port", $Port)
-if ($Share) { $args += "--share" }
+Write-Host "Starting the detector..." -ForegroundColor Green
+Write-Host "The window opens in a few seconds."
+$args = @("app.py")
 & $py @args

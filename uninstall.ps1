@@ -12,7 +12,7 @@
 #
 #   %USERPROFILE%\.cache\torch\hub\checkpoints   ImageNet weights torchvision
 #                                                downloads on first use (~35MB)
-#   %USERPROFILE%\.cache\huggingface             pulled in by Gradio
+#   %USERPROFILE%\.cache\huggingface             left by older versions
 #   %USERPROFILE%\.kaggle\kaggle.json            only if you created it
 #
 # The shared caches are NOT removed by default - they are shared with other

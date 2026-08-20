@@ -88,14 +88,25 @@ stage, verified by simulating resume from several epochs.
 ## 5.5 Demonstration tools
 
 Two entry points let the trained model be used rather than only measured. The
-primary one is `app.py`, a Gradio web interface with drag-and-drop upload, a
-progress indicator and a probability display — what a marker or any other
-non-developer is expected to use. `src/predict.py` is a command line tool
-taking a single image or a folder, more convenient for batches and the route
-used during development. The interface imports its inference logic from
+primary one is `app.py`, a desktop window showing the classified region, the
+verdict, both class probabilities and any out-of-range warnings — what a marker
+or any other non-developer is expected to use. `src/predict.py` is a command
+line tool taking a single image or a folder, more convenient for batches and
+the route used during development. The window imports its inference logic from
 `predict.py` rather than reimplementing it, so a preprocessing difference
 cannot arise silently; a mismatch would give different answers for the same
 image.
+
+The window was originally built with Gradio, which serves a local web page and
+opens a browser tab. That worked, but it meant importing a web framework and an
+ASGI server to display one image and one number, and ten to twenty seconds
+passed before anything appeared on screen. Two consequences followed from that
+delay rather than from any defect: the launcher had to be given a visible
+console so the wait did not look like a crash, and the install carried a web
+stack it never used as a web application. Rebuilding it in tkinter — already
+present in the standard library, and already used by the installer — removed
+both, cut the startup to two or three seconds, and made the two windows look
+like one product.
 
 Both apply face detection before classification, warn when an input falls
 outside the validated conditions — citing the *measured* accuracy for that

@@ -166,7 +166,7 @@ its output. Both regimes are run so the difference can be quantified.
 The experiment scripts establish that the model was measured. They do not make
 it usable. Four design decisions shaped the interface that does.
 
-**One inference path, two front ends.** A web interface (`app.py`) and a
+**One inference path, two front ends.** A desktop application (`app.py`) and a
 command line tool (`predict.py`) share the same preprocessing and inference
 code, the interface importing from the tool. The graphical interface is the
 primary one, on the reasoning that the people best placed to judge whether a

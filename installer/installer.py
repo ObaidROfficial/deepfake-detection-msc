@@ -49,7 +49,7 @@ from tkinter import filedialog, messagebox, ttk
 # ---------------------------------------------------------------------------
 
 APP_NAME = "OBI DeepFake Image Detector"
-APP_VERSION = "3.2"
+APP_VERSION = "3.3"
 PUBLISHER = "Obaid"
 
 WELCOME_TITLE = f"Welcome to {APP_NAME}"
@@ -75,11 +75,11 @@ Click Next to continue."""
 FINISH_TEXT = """\
 Installation complete.
 
-A shortcut has been placed on your desktop. The detector opens in your web
-browser when you launch it.
+A shortcut has been placed on your desktop. The detector opens in its own
+window - there is no browser and nothing to log into.
 
-The first time you classify an image it may take a few seconds while the model
-loads. After that it is quick.
+The first time you open it, it takes a few seconds to load the model. After
+that it is quick.
 
 To remove it later, run the uninstaller in the folder you installed to. It
 takes the application, its Python environment and the shortcut with it.
@@ -923,7 +923,7 @@ class Installer(tk.Tk):
                        "--index-url", "https://download.pytorch.org/whl/cpu", "-q"])
             self.progress(65, "Installing remaining dependencies")
             self._run([str(vpy), "-m", "pip", "install", "pillow", "pyyaml",
-                       "numpy", "pandas", "opencv-python<5", "gradio", "-q"])
+                       "numpy", "pandas", "opencv-python<5", "-q"])
 
             # 5. Weights
             self._base, self._span = 80, 15
@@ -988,10 +988,10 @@ class Installer(tk.Tk):
 
             # Point at the batch launcher rather than pythonw.exe.
             #
-            # pythonw runs with no window at all, and importing torch plus
-            # loading the model takes 10 to 20 seconds before the browser
-            # opens. To the user that is indistinguishable from nothing
-            # happening - and if it fails, it fails just as silently. The
+            # pythonw runs with no window at all, and importing torch
+            # still takes a few seconds before the window appears. To the user
+            # that is indistinguishable from nothing happening - and if it
+            # fails, it fails just as silently. The
             # launcher prints what it is doing, checks its prerequisites, and
             # leaves the error on screen instead of swallowing it.
             launcher = target / "Launch Detector.bat"

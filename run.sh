@@ -2,7 +2,6 @@
 # Launch the graphical interface - macOS and Linux.
 #
 #   ./run.sh                     start the web interface
-#   ./run.sh --share             also create a temporary public link
 #   ./run.sh --image photo.jpg   classify one image on the command line instead
 #
 # Activates the virtual environment for you. This exists because forgetting to

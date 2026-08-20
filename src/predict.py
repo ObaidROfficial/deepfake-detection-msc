@@ -188,7 +188,7 @@ def load_detector(model_name: str, config: dict, weights: str | None = None):
     """
     Load a trained model and its evaluation transform.
 
-    Shared by the command line tool and the Gradio interface so both use
+    Shared by the command line tool and the desktop interface so both use
     identical preprocessing - a mismatch there would silently change results.
 
     Returns (model, transform, checkpoint_metadata).

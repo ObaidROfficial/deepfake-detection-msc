@@ -53,6 +53,7 @@ jupyterlab>=4.1.0
 ipywidgets>=8.1.0
 
 # --- Graphical interface (app.py) ---
-# Only needed to run the GUI. The command line tool src/predict.py and all
-# experiment scripts work without it.
-gradio>=4.44.0
+# Nothing extra. The desktop window is built with tkinter, which ships with
+# Python, and it displays images through Pillow, which is already required
+# above. Earlier versions used Gradio and therefore pulled in fastapi, uvicorn
+# and a web server, for a window that then had to open in a browser.

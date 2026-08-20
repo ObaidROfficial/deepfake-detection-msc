@@ -28,7 +28,7 @@ Chapter 5 can be checked.
 | `src/evaluate.py` | ~260 | In-domain and cross-dataset evaluation, threshold diagnostic, score dumps |
 | `src/robustness.py` | ~340 | 22-setting degradation suite, FGSM in two label regimes |
 | `src/predict.py` | ~380 | Shared inference logic, face detection, out-of-range checks, CLI |
-| `app.py` | ~300 | Gradio interface, importing inference from `predict.py` |
+| `app.py` | ~430 | Desktop window (tkinter), importing inference from `predict.py` |
 | `installer/installer.py` | ~600 | Graphical installer, including Python bootstrap and checksum verification |
 | `installer/uninstaller.py` | ~340 | Graphical uninstaller with self-deletion handling |
 
