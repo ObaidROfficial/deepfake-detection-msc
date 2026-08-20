@@ -4,6 +4,42 @@ Notable changes to the OBI DeepFake Image Detector. The model itself is
 unchanged since 3.0 — every release since has been about making it usable and
 honest about its limits, not about accuracy.
 
+## 3.3 — A real application, and a native macOS install
+
+### Changed
+
+- **The detector is a desktop application now.** It was a Gradio web interface
+  that served a local page and opened a browser tab. That meant importing a web
+  framework and an ASGI server to show one image and one number, and ten to
+  twenty seconds passed before anything appeared — long enough that the launcher
+  had to be given a visible console so the wait did not look like a crash.
+  Rebuilt in tkinter, which is in the standard library and already used by the
+  installer: startup is two to three seconds, the install no longer carries a
+  web stack it never used as a web application, and the two windows look like
+  one product. Inference is still imported from `predict.py`, so the window and
+  the command line tool still cannot drift apart.
+- **macOS installs are a proper `.app` bundle** in Applications. The Python
+  environment, the weights and the code all live inside it, so removing the
+  program is dragging one icon to the Trash. No uninstaller, and no desktop
+  icon, because neither is what a Mac user expects.
+- **The Windows uninstaller is carried inside the installer** rather than
+  downloaded from the release. That removes a network call that could fail
+  after everything else had succeeded, and takes a file off the releases page
+  that was only confusing there — downloaded on its own it refuses to run,
+  because it is meant to sit in the install folder.
+- The two platforms now behave differently on purpose: a bundle you drag to the
+  Trash on macOS, a folder with an uninstaller on Windows.
+
+### Fixed
+
+- **The application window was unusable.** `tk.Label` measures `width` and
+  `height` in characters and lines, not pixels, so asking for a 320-pixel
+  preview asked for a box 320 characters wide. It filled the window and pushed
+  the results panel and the entire button bar off the bottom edge.
+- **The taskbar showed Python's icon.** Windows groups taskbar buttons by
+  Application User Model ID, and a plain `python.exe` process inherits the
+  interpreter's. Setting an explicit ID fixes it; the window icon alone does not.
+
 ## 3.2 — Graphical installer
 
 The headline change: installing this no longer requires a terminal.

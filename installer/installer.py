@@ -72,7 +72,7 @@ page at github.com/ObaidROfficial/deepfake-detection-msc/issues
 
 Click Next to continue."""
 
-FINISH_TEXT = """\
+FINISH_TEXT_WINDOWS = """\
 Installation complete.
 
 A shortcut has been placed on your desktop. The detector opens in its own
@@ -86,6 +86,24 @@ takes the application, its Python environment and the shortcut with it.
 
 Thank you for trying it. Bug reports and suggestions are welcome at
 github.com/ObaidROfficial/deepfake-detection-msc/issues"""
+
+FINISH_TEXT_MAC = """\
+Installation complete.
+
+The detector is now in your Applications folder. It opens in its own window -
+there is no browser and nothing to log into.
+
+The first time you open it, it takes a few seconds to load the model. After
+that it is quick.
+
+To remove it, drag it from Applications to the Trash. Everything the program
+uses lives inside it, so nothing is left behind except the shared PyTorch
+cache in your home folder, which other Python software may also be using.
+
+Thank you for trying it. Bug reports and suggestions are welcome at
+github.com/ObaidROfficial/deepfake-detection-msc/issues"""
+
+FINISH_TEXT = FINISH_TEXT_MAC if platform.system() == "Darwin" else FINISH_TEXT_WINDOWS
 
 # ---------------------------------------------------------------------------
 
@@ -231,14 +249,81 @@ def desktop_dir() -> Path:
     return fallback if fallback.is_dir() else Path.home()
 
 
+IS_MAC = platform.system() == "Darwin"
+IS_WINDOWS = platform.system() == "Windows"
+
+
 def default_install_dir() -> Path:
-    if platform.system() == "Windows":
-        base = Path(os.environ.get("LOCALAPPDATA", Path.home()))
-    elif platform.system() == "Darwin":
-        base = Path.home() / "Applications"
-    else:
-        base = Path.home() / ".local" / "share"
-    return base / "OBI-DeepFake-Image-Detector"
+    """
+    Where the application goes.
+
+    macOS gets a real .app bundle in Applications. Everything - the virtual
+    environment, the weights, the code - lives inside it, so removing the
+    program is dragging one icon to the Trash. That is what a Mac user expects,
+    and it means no uninstaller is needed on macOS at all.
+
+    Windows keeps a plain folder under LOCALAPPDATA with an uninstaller in it,
+    which is the convention there. The two platforms differ deliberately.
+    """
+    if IS_WINDOWS:
+        return Path(os.environ.get("LOCALAPPDATA", Path.home())) / "OBI-DeepFake-Image-Detector"
+    if IS_MAC:
+        return Path.home() / "Applications" / f"{APP_NAME}.app"
+    return Path.home() / ".local" / "share" / "OBI-DeepFake-Image-Detector"
+
+
+def payload_dir(target: Path) -> Path:
+    """Where the code actually lands - inside Contents/Resources on macOS."""
+    return target / "Contents" / "Resources" if IS_MAC else target
+
+
+LAUNCHER = """\
+#!/bin/bash
+# Launcher inside the .app bundle. Everything the program needs sits beside
+# this script in ../Resources, so the bundle can be moved or renamed without
+# breaking - only the virtual environment's absolute paths would object, and
+# those are written when it is created here.
+DIR="$(cd "$(dirname "$0")/../Resources" && pwd)"
+cd "$DIR" || exit 1
+exec "$DIR/venv/bin/python" app.py "$@"
+"""
+
+INFO_PLIST = """\
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key><string>{name}</string>
+    <key>CFBundleDisplayName</key><string>{name}</string>
+    <key>CFBundleExecutable</key><string>launcher</string>
+    <key>CFBundleIdentifier</key><string>com.obaidrofficial.deepfakedetector</string>
+    <key>CFBundleIconFile</key><string>app.icns</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>{version}</string>
+    <key>CFBundleVersion</key><string>{version}</string>
+    <key>LSMinimumSystemVersion</key><string>11.0</string>
+    <key>NSHighResolutionCapable</key><true/>
+</dict>
+</plist>
+"""
+
+
+def make_app_bundle(target: Path) -> Path:
+    """Create the .app skeleton and return the Resources directory."""
+    contents = target / "Contents"
+    macos = contents / "MacOS"
+    resources = contents / "Resources"
+    macos.mkdir(parents=True, exist_ok=True)
+    resources.mkdir(parents=True, exist_ok=True)
+
+    (contents / "Info.plist").write_text(
+        INFO_PLIST.format(name=APP_NAME, version=APP_VERSION), encoding="utf-8")
+
+    launcher = macos / "launcher"
+    launcher.write_text(LAUNCHER, encoding="utf-8")
+    launcher.chmod(0o755)
+    return resources
 
 
 # The band of Python versions this project is known to work on. The upper bound
@@ -561,11 +646,17 @@ class Installer(tk.Tk):
                                            expand=True, ipady=5)
         self._button(row, "Browse", self._browse).pack(side="left", padx=(8, 0))
 
-        for var, label, note in [
+        options = [
             (self.include_second_model, "Also install the second model (EfficientNet-B0)",
              "Adds 16MB. Only needed if you want to compare the two."),
-            (self.create_shortcut, "Create a desktop shortcut", ""),
-        ]:
+        ]
+        # No desktop shortcut on macOS. The bundle goes straight into
+        # Applications, which is where a Mac user looks for it; a desktop icon
+        # as well would be clutter.
+        if not IS_MAC:
+            options.append((self.create_shortcut, "Create a desktop shortcut", ""))
+
+        for var, label, note in options:
             tk.Checkbutton(body, text=label, variable=var, bg=BG, fg=FG,
                            selectcolor="#252539", activebackground=BG,
                            activeforeground=FG, font=(UI_FONT, 10),
@@ -588,7 +679,9 @@ class Installer(tk.Tk):
         self._button(nav, "Back", self.show_welcome).pack(side="left")
 
     def _browse(self):
-        d = filedialog.askdirectory(title="Choose install location")
+        title = ("Choose where to put the application"
+                 if IS_MAC else "Choose install location")
+        d = filedialog.askdirectory(title=title)
         if d:
             self.install_dir.set(str(Path(d) / default_install_dir().name))
 
@@ -770,13 +863,23 @@ class Installer(tk.Tk):
 
     def _launch(self):
         target = Path(self.install_dir.get())
+        where = payload_dir(target)
         try:
-            if platform.system() == "Windows":
-                subprocess.Popen([str(target / "venv" / "Scripts" / "pythonw.exe"),
-                                  str(target / "app.py")], cwd=target)
+            if IS_MAC:
+                # Let Finder start the bundle, so it behaves exactly as it
+                # will when the user opens it from Applications.
+                subprocess.Popen(["open", str(target)])
+            elif IS_WINDOWS:
+                launcher = where / "Launch Detector.bat"
+                if launcher.exists():
+                    subprocess.Popen(["cmd", "/c", "start", "", str(launcher)],
+                                     cwd=where)
+                else:
+                    subprocess.Popen([str(where / "venv" / "Scripts" / "pythonw.exe"),
+                                      str(where / "app.py")], cwd=where)
             else:
-                subprocess.Popen([str(target / "venv" / "bin" / "python"),
-                                  str(target / "app.py")], cwd=target)
+                subprocess.Popen([str(where / "venv" / "bin" / "python"),
+                                  str(where / "app.py")], cwd=where)
         except Exception as e:
             messagebox.showerror("Could not launch", str(e))
 
@@ -860,6 +963,14 @@ class Installer(tk.Tk):
             target = Path(self.install_dir.get())
             target.mkdir(parents=True, exist_ok=True)
 
+            # On macOS the target is a .app bundle, so build the skeleton
+            # first: the payload has to land inside Contents/Resources.
+            if IS_MAC:
+                where = make_app_bundle(target)
+                self.log(f"Created application bundle: {target.name}")
+            else:
+                where = target
+
             # 1. Python. Normally already resolved on the welcome screen; this
             #    re-check is a safety net, not the main path.
             self._base, self._span = 0, 5
@@ -875,32 +986,39 @@ class Installer(tk.Tk):
             # 2. Application files
             self._base, self._span = 5, 15
             self.progress(6, "Downloading application")
-            zip_path = target / "_src.zip"
+            zip_path = where / "_src.zip"
             self._download(SOURCE_ZIP, zip_path, "application files")
             self.log("Extracting...")
             with zipfile.ZipFile(zip_path) as z:
-                z.extractall(target / "_extract")
-            inner = next((target / "_extract").iterdir())
+                z.extractall(where / "_extract")
+            inner = next((where / "_extract").iterdir())
 
             copied, skipped = [], []
             for item in sorted(inner.iterdir()):
                 if item.name not in RUNTIME_ITEMS:
                     skipped.append(item.name)
                     continue
-                dst = target / item.name
+                dst = where / item.name
                 if dst.exists():
                     shutil.rmtree(dst) if dst.is_dir() else dst.unlink()
                 shutil.move(str(item), str(dst))
                 copied.append(item.name)
 
-            # The icon, for the desktop shortcut. Lifted out of installer/ so
-            # the install does not carry the build tooling as well.
-            src_icon = inner / "installer" / "app.ico"
-            if src_icon.exists():
-                shutil.move(str(src_icon), str(target / "app.ico"))
-                copied.append("app.ico")
+            # Icons, lifted out of installer/ so the install does not carry the
+            # build tooling with it. app.png is what the application window
+            # uses on macOS and Linux, .ico on Windows, .icns for the bundle.
+            for icon in ("app.ico", "app.png", "app.icns"):
+                src_icon = inner / "installer" / icon
+                if not src_icon.exists():
+                    continue
+                if icon == "app.icns" and IS_MAC:
+                    shutil.move(str(src_icon), str(target / "Contents" /
+                                                   "Resources" / icon))
+                else:
+                    shutil.move(str(src_icon), str(where / icon))
+                copied.append(icon)
 
-            shutil.rmtree(target / "_extract", ignore_errors=True)
+            shutil.rmtree(where / "_extract", ignore_errors=True)
             zip_path.unlink(missing_ok=True)
             self.log(f"  installed {len(copied)} items")
             if skipped:
@@ -910,10 +1028,9 @@ class Installer(tk.Tk):
             self._base, self._span = 20, 5
             self.progress(21, "Creating virtual environment")
             self._run([*python_argv(self.python_cmd), "-m", "venv", "venv"],
-                      cwd=target)
-            vpy = (target / "venv" / ("Scripts" if platform.system() == "Windows"
-                                      else "bin") /
-                   ("python.exe" if platform.system() == "Windows" else "python"))
+                      cwd=where)
+            vpy = (where / "venv" / ("Scripts" if IS_WINDOWS else "bin") /
+                   ("python.exe" if IS_WINDOWS else "python"))
 
             # 4. Dependencies
             self._base, self._span = 25, 55
@@ -928,7 +1045,7 @@ class Installer(tk.Tk):
             # 5. Weights
             self._base, self._span = 80, 15
             self.progress(81, "Downloading model")
-            models = target / "models"
+            models = where / "models"
             models.mkdir(exist_ok=True)
             wanted = list(WEIGHTS)
             if self.include_second_model.get():
@@ -936,29 +1053,45 @@ class Installer(tk.Tk):
             for w in wanted:
                 self._download(f"{RELEASE}/{w}", models / w, w)
 
-            # 6. Uninstaller. Not fatal if it is missing - a user who cannot
-            #    uninstall is annoyed, whereas a failed install is useless.
-            self.progress(93, "Fetching the uninstaller")
-            self._base, self._span = 93, 3
-            try:
-                dest = target / UNINSTALLER
-                self._download(f"{RELEASE}/{UNINSTALLER}", dest, "uninstaller")
-                if platform.system() != "Windows":
-                    dest.chmod(0o755)
-            except Exception as e:
-                self.log(f"Could not fetch the uninstaller: {e}")
-                self.log("Remove this folder by hand if you want it gone: "
-                         f"{target}")
+            # 6. Uninstaller, Windows only.
+            #
+            # It is carried inside this executable rather than downloaded. That
+            # removes a network round-trip that could fail after everything
+            # else succeeded, and it takes a file off the releases page that
+            # was only ever confusing there - downloaded on its own it refuses
+            # to do anything, because it is meant to sit in the install folder.
+            #
+            # macOS needs none of this. The whole application is a bundle, so
+            # removing it is dragging it to the Trash.
+            self.progress(94, "Finishing up")
+            if IS_WINDOWS:
+                try:
+                    src = bundled(UNINSTALLER)
+                    if src.exists():
+                        shutil.copy2(src, target / UNINSTALLER)
+                        self.log(f"Uninstaller placed in {target.name}")
+                    else:
+                        self.log("No uninstaller was bundled with this build; "
+                                 "remove the folder by hand to uninstall.")
+                except Exception as e:
+                    self.log(f"Could not place the uninstaller: {e}")
 
-            # 7. Shortcut
+            # 7. Shortcut. Not on macOS - the bundle is already in Applications
+            #    and Mac users do not expect desktop icons.
             self.progress(96, "Finishing up")
-            if self.create_shortcut.get():
+            if self.create_shortcut.get() and not IS_MAC:
                 try:
                     made = self._make_shortcut(target)
                     self.log(f"Desktop shortcut created: {made}")
                 except Exception as e:
                     self.log(f"Could not create shortcut: {e}")
-                    self.log(f"Launch it directly instead: {target / 'app.py'}")
+                    self.log(f"Launch it directly instead: {where / 'app.py'}")
+            elif IS_MAC:
+                self.log(f"Installed to {target}")
+                # Ask Finder to notice the new bundle straight away.
+                subprocess.run(["/System/Library/Frameworks/CoreServices.framework"
+                                "/Frameworks/LaunchServices.framework/Support/lsregister",
+                                "-f", str(target)], capture_output=True)
 
             self.progress(100, "Done")
             self.log("\nInstallation complete.")

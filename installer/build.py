@@ -60,9 +60,17 @@ APP_NAME = "OBI-DeepFake-Image-Detector"
 # system temp directory. Only the finished executables land in the repository.
 WORK = Path(tempfile.gettempdir()) / "obi-detector-build"
 
+# Order matters. On Windows the uninstaller is built first and then embedded
+# inside the installer, so the installer can write it into the install folder
+# rather than downloading it from the release. That removes a network call that
+# could fail after everything else had succeeded, and takes a file off the
+# releases page that was only confusing there.
+#
+# macOS builds no uninstaller at all: the application is a .app bundle, so
+# removing it is dragging it to the Trash.
 TARGETS = {
-    "setup":     ("installer.py",   f"{APP_NAME}-Setup"),
     "uninstall": ("uninstaller.py", f"{APP_NAME}-Uninstall"),
+    "setup":     ("installer.py",   f"{APP_NAME}-Setup"),
 }
 
 EXCLUDES = [
@@ -145,6 +153,10 @@ def main() -> int:
     print()
 
     wanted = [args.only] if args.only else list(TARGETS)
+    if system == "Darwin" and "uninstall" in wanted and not args.only:
+        wanted.remove("uninstall")
+        print("Skipping the uninstaller: a macOS install is a .app bundle,")
+        print("removed by dragging it to the Trash.\n")
     built: list[Path] = []
 
     for key in wanted:
@@ -179,6 +191,17 @@ def main() -> int:
         # to the system keychain the way the Windows build falls back to the
         # Windows certificate store.
         cmd += ["--hidden-import", "certifi", "--collect-data", "certifi"]
+
+        # Embed the uninstaller inside the installer (Windows only).
+        if key == "setup" and system == "Windows":
+            un = HERE / "dist" / f"{APP_NAME}-Uninstall.exe"
+            if un.exists():
+                cmd += ["--add-data", f"{un};."]
+                print(f"  embedding {un.name} ({un.stat().st_size/1e6:.1f} MB)")
+            else:
+                print(f"  WARNING: {un.name} not found, so the installer will")
+                print(f"  not be able to place an uninstaller. Build without")
+                print(f"  --only, or build the uninstaller first.")
 
         # Icon, if one has been made. Two separate things are needed: --icon
         # sets the image Explorer shows for the .exe, while --add-data puts a

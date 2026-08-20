@@ -140,12 +140,33 @@ Signing requires a paid certificate from Microsoft or Apple, which is outside
 the scope of a student project. The warnings are documented in the main README
 rather than left to surprise anyone.
 
-## The uninstaller
+## Where things end up
 
-Downloaded into the install folder by the installer, and compiled separately so
-it still works after the virtual environment it is deleting has gone. It has to
-be the frozen executable rather than the `.py`: an interpreter cannot delete
-the files it is currently running from.
+The two platforms differ deliberately, because their conventions differ.
+
+| | Windows | macOS |
+|---|---|---|
+| Installed to | `%LOCALAPPDATA%\OBI-DeepFake-Image-Detector` | `~/Applications/OBI DeepFake Image Detector.app` |
+| Layout | plain folder | `.app` bundle, everything inside `Contents/Resources` |
+| Launched by | desktop shortcut → `Launch Detector.bat` | the bundle itself |
+| Removed by | the bundled uninstaller | dragging it to the Trash |
+
+The macOS bundle is self-contained: the virtual environment, the weights and
+the code all sit inside it. That is what makes drag-to-Trash a complete
+uninstall, and it is why macOS ships no uninstaller at all.
+
+## The uninstaller (Windows only)
+
+Compiled separately, then **embedded inside the installer** with `--add-data`
+and written out during install. It used to be published as its own release
+asset and downloaded at install time; carrying it removes a network call that
+could fail after everything else had succeeded, and takes a file off the
+releases page that was only confusing there — downloaded on its own it refuses
+to run, because it is meant to sit in the install folder.
+
+It has to be the frozen executable rather than the `.py`: an interpreter cannot
+delete the files it is currently running from. `build.py` therefore builds it
+first and the installer second.
 
 **It refuses to run against a git working copy.** Run it as a script from a
 clone and it resolves its target as the repository itself — source, report and
