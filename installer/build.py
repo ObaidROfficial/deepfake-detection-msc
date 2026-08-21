@@ -225,6 +225,15 @@ def main() -> int:
                 print(f"  {out.name} is locked - close it and run this again.")
                 return 1
 
+        # Zips are made by hand after the build, so PyInstaller never touches
+        # them and last release's zip survives in dist/ holding last release's
+        # binary. It then matches the glob below and gets reported as though it
+        # had just been built, which is how a stale artefact nearly reached a
+        # release. Delete it and let the publish step make a fresh one.
+        for z in (HERE / "dist").glob(f"{name}*.zip"):
+            z.unlink()
+            print(f"  removed stale {z.name} - re-zip after this build")
+
         print(f"Building {name} ...")
         if subprocess.run(cmd).returncode != 0:
             print(f"  FAILED: {name}")
@@ -262,12 +271,14 @@ def main() -> int:
             print("architecture it runs on, so an Intel Mac needs its own build")
             print("(or install from source with setup.sh instead).")
             print("\nPublish the Setup binary zipped - a bare Unix executable")
-            print("loses its execute bit when downloaded through a browser:")
+            print("loses its execute bit when downloaded through a browser.")
+            print("Copy these two lines one at a time. They are deliberately")
+            print("not split with a backslash: pasted as a single line, the")
+            print("continuation becomes an escaped space and zip then looks")
+            print("for a filename beginning with a space.")
             print(f"    cd {HERE / 'dist'}")
-            print(f"    zip OBI-DeepFake-Image-Detector-Setup-macOS-{arch}.zip \\")
-            print("        OBI-DeepFake-Image-Detector-Setup")
-            print("\nPublish the Uninstall binary BARE, under exactly that")
-            print("name - installer.py fetches it by name and chmods it itself.")
+            print(f"    zip OBI-DeepFake-Image-Detector-Setup-macOS-{arch}.zip"
+                  f" OBI-DeepFake-Image-Detector-Setup")
             print("\nWhoever downloads Setup will still need right-click ->")
             print("Open the first time; Gatekeeper blocks unsigned binaries on")
             print("a double-click.")
