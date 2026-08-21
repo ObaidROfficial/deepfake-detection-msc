@@ -49,7 +49,7 @@ from tkinter import filedialog, messagebox, ttk
 # ---------------------------------------------------------------------------
 
 APP_NAME = "OBI DeepFake Image Detector"
-APP_VERSION = "3.3"
+APP_VERSION = "3.4"
 PUBLISHER = "Obaid"
 
 WELCOME_TITLE = f"Welcome to {APP_NAME}"
@@ -114,9 +114,13 @@ WEIGHTS = ["mobilenet_v2_best.pt"]          # only the primary model by default
 OPTIONAL_WEIGHTS = ["efficientnet_b0_best.pt"]
 PYTHON_DOWNLOAD = "https://www.python.org/downloads/"
 
-# The compiled uninstaller, published as a release asset. It has to be the
-# frozen executable rather than the .py: the uninstaller deletes the virtual
-# environment, and an interpreter cannot remove the files it is running from.
+# The compiled uninstaller, carried inside this installer by build.py and
+# written out during the install. It used to be a release asset fetched over
+# the network, which meant a download that could fail after everything else had
+# already succeeded. It has to be the frozen executable rather than the .py:
+# the uninstaller deletes the virtual environment, and an interpreter cannot
+# remove the files it is running from. Windows only - macOS installs are a .app
+# bundle and are removed by dragging them to the Trash.
 UNINSTALLER = ("OBI-DeepFake-Image-Detector-Uninstall.exe"
                if platform.system() == "Windows"
                else "OBI-DeepFake-Image-Detector-Uninstall")
@@ -283,6 +287,11 @@ LAUNCHER = """\
 # this script in ../Resources, so the bundle can be moved or renamed without
 # breaking - only the virtual environment's absolute paths would object, and
 # those are written when it is created here.
+#
+# Tcl belongs to the virtual environment and nobody else. Finder starts this
+# with a clean environment, but a launch inherited from somewhere else could
+# carry a TCL_LIBRARY that tkinter would then fail on.
+unset TCL_LIBRARY TK_LIBRARY
 DIR="$(cd "$(dirname "$0")/../Resources" && pwd)"
 cd "$DIR" || exit 1
 exec "$DIR/venv/bin/python" app.py "$@"
@@ -337,13 +346,53 @@ PY_MIN = (3, 9)
 PY_MAX = (3, 13)
 
 
+# Variables this installer must not hand down to anything it starts.
+#
+# PyInstaller's tkinter runtime hook points TCL_LIBRARY and TK_LIBRARY at the
+# copy of Tcl unpacked into this executable's temporary folder, so that the
+# frozen installer can draw its own window. Child processes inherit the
+# environment, so the freshly installed detector - a completely different
+# Python, in its own virtual environment - went looking for its Tcl inside
+# _MEIxxxxxx and died with "Can't find a usable init.tcl". The install itself
+# was fine; only the launch was broken, and only when launched from here.
+#
+# PYTHONHOME and PYTHONPATH are stripped for the same reason: they would point
+# a child interpreter at this one's frozen standard library. The _PYI_ and
+# _MEIPASS2 variables are how PyInstaller tells a child process it is running
+# inside a bundle, which is a lie once the child is somebody else's Python.
+_UNSAFE_TO_INHERIT = (
+    "TCL_LIBRARY", "TK_LIBRARY", "TKPATH",
+    "PYTHONHOME", "PYTHONPATH",
+    "_MEIPASS2", "_PYI_APPLICATION_HOME_DIR", "_PYI_ARCHIVE_FILE",
+    "_PYI_PARENT_PROCESS_LEVEL",
+    "LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH", "DYLD_FRAMEWORK_PATH",
+)
+
+
+def child_env() -> dict:
+    """The environment to give anything this installer starts.
+
+    Where PyInstaller overwrote a variable that already had a value, it saved
+    the original as <NAME>_ORIG. Restoring that is better than dropping the
+    variable outright, which would quietly discard a setting the user had
+    deliberately made before running this.
+    """
+    env = dict(os.environ)
+    for name in _UNSAFE_TO_INHERIT:
+        env.pop(name, None)
+        original = env.pop(name + "_ORIG", None)
+        if original:
+            env[name] = original
+    return env
+
+
 def _version_of(parts: list[str]) -> tuple[int, int] | None:
     """(major, minor) for the interpreter, or None if it will not run."""
     try:
         out = subprocess.run(
             [*parts, "-c",
              "import sys;print(f'{sys.version_info.major}.{sys.version_info.minor}')"],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True, text=True, timeout=15, env=child_env(),
         )
         if out.returncode != 0:
             return None
@@ -864,22 +913,27 @@ class Installer(tk.Tk):
     def _launch(self):
         target = Path(self.install_dir.get())
         where = payload_dir(target)
+        # child_env() matters more here than anywhere else: without it the
+        # detector inherits this installer's TCL_LIBRARY and cannot find its
+        # own Tcl. See the comment on _UNSAFE_TO_INHERIT.
+        env = child_env()
         try:
             if IS_MAC:
                 # Let Finder start the bundle, so it behaves exactly as it
-                # will when the user opens it from Applications.
+                # will when the user opens it from Applications. Finder gives
+                # the app a fresh environment, so nothing is inherited here.
                 subprocess.Popen(["open", str(target)])
             elif IS_WINDOWS:
                 launcher = where / "Launch Detector.bat"
                 if launcher.exists():
                     subprocess.Popen(["cmd", "/c", "start", "", str(launcher)],
-                                     cwd=where)
+                                     cwd=where, env=env)
                 else:
                     subprocess.Popen([str(where / "venv" / "Scripts" / "pythonw.exe"),
-                                      str(where / "app.py")], cwd=where)
+                                      str(where / "app.py")], cwd=where, env=env)
             else:
                 subprocess.Popen([str(where / "venv" / "bin" / "python"),
-                                  str(where / "app.py")], cwd=where)
+                                  str(where / "app.py")], cwd=where, env=env)
         except Exception as e:
             messagebox.showerror("Could not launch", str(e))
 
@@ -936,7 +990,8 @@ class Installer(tk.Tk):
         """Run a command, streaming output into the log."""
         self.log("$ " + " ".join(str(c) for c in cmd))
         p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT, text=True, bufsize=1)
+                             stderr=subprocess.STDOUT, text=True, bufsize=1,
+                             env=child_env())
         for line in p.stdout:
             if self.cancelled:
                 p.kill()

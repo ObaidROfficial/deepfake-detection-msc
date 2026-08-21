@@ -157,9 +157,9 @@ of the pixel range.
 
 ## 5.7 Problems encountered
 
-Sixteen defects or misjudgements were encountered. The four that materially
+Seventeen defects or misjudgements were encountered. The four that materially
 shaped the *results* are discussed below; four that shaped the tooling rather
-than the findings are in Appendix A.5, and the remaining eight are tabulated.
+than the findings are in Appendix A.5, and the remaining nine are tabulated.
 They are recorded because Lesson 3 requires reflection on implementation
 problems.
 
@@ -170,10 +170,12 @@ images per second against a projected 15–25. Being wrong conservatively is the
 right direction when planning to a deadline, but the methodology quotes the
 measured figure.
 
-The remaining eight were minor in isolation but are recorded because several
+The remaining nine were minor in isolation but are recorded because several
 would have produced invalid results or silent failures rather than visible
-errors. Defects 13 and 14 appeared only on a second machine, which is the
-argument for testing a deliverable somewhere other than where it was built:
+errors. Defects 13 and 14 appeared only on a second machine and defect 17 only
+when the program was started the way a user starts it, which together are the
+argument for testing a deliverable somewhere other than where it was built, by
+the route it will actually be used:
 
 | # | Defect | Consequence if unfixed |
 |---|---|---|
@@ -185,6 +187,7 @@ argument for testing a deliverable somewhere other than where it was built:
 | 14 | Emphasis in the GUI banner had no explicit colour | Inherited white from the dark theme, rendering the bold words invisible on a light background |
 | 15 | A guard in the uninstaller was written as a chained conditional expression rather than a conditional statement | Parsed as valid Python and happened to give the right answer, so it passed testing while meaning something other than intended |
 | 16 | The setup scripts checked that a Python existed but not which version | On a machine with only Python 3.14 they would proceed and then fail at the numpy build, reproducing defect 5 on the user's machine instead of the developer's |
+| 17 | The frozen installer handed its own `TCL_LIBRARY` down to the program it had just installed | The detector failed to start with `Can't find a usable init.tcl` when launched from the installer's own tick box, although the install was correct and the desktop shortcut worked |
 
 Two smaller issues were also fixed: skimage warned that LBP on floating-point
 images behaves unpredictably where adjacent pixels are near-equal, resolved by

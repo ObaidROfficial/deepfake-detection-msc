@@ -4,6 +4,36 @@ Notable changes to the OBI DeepFake Image Detector. The model itself is
 unchanged since 3.0 — every release since has been about making it usable and
 honest about its limits, not about accuracy.
 
+## 3.4 — The installer stopped breaking the thing it had just installed
+
+### Fixed
+
+- **The detector would not start when launched from the installer**, failing
+  with `TclError: Can't find a usable init.tcl`. The install itself was
+  correct and the desktop shortcut worked; only the tick-box launch at the end
+  was broken, which is the worst possible place for it, since that is the
+  first thing a new user does.
+
+  PyInstaller's tkinter runtime hook sets `TCL_LIBRARY` and `TK_LIBRARY` to the
+  copy of Tcl unpacked inside the frozen installer's temporary folder, so the
+  installer can draw its own window. Child processes inherit the environment,
+  so the newly installed detector — a different Python, in its own virtual
+  environment — went looking for its Tcl inside `_MEIxxxxxx` and found
+  nothing. The installer now strips those variables, along with `PYTHONHOME`,
+  `PYTHONPATH` and PyInstaller's own `_MEIPASS2` and `_PYI_*` markers, from
+  everything it starts. Where PyInstaller had overwritten a variable that
+  already had a value, the saved original is restored rather than discarded.
+
+  `Launch Detector.bat` and the macOS bundle launcher clear the two Tcl
+  variables as well. That is belt and braces, not the fix — but a launcher
+  that cannot be broken by whatever started it is worth the two lines.
+
+### Changed
+
+- Corrected two stale comments: `installer.py` still described the uninstaller
+  as a release asset fetched over the network, and `Launch Detector.bat` still
+  claimed the console shows a local URL. Both date from before 3.3.
+
 ## 3.3 — A real application, and a native macOS install
 
 ### Changed
