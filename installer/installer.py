@@ -49,7 +49,7 @@ from tkinter import filedialog, messagebox, ttk
 # ---------------------------------------------------------------------------
 
 APP_NAME = "OBI DeepFake Image Detector"
-APP_VERSION = "3.4"
+APP_VERSION = "3.3.1"
 PUBLISHER = "Obaid"
 
 WELCOME_TITLE = f"Welcome to {APP_NAME}"

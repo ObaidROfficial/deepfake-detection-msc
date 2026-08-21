@@ -37,7 +37,7 @@ from tkinter import messagebox, ttk
 # ---------------------------------------------------------------------------
 
 APP_NAME = "OBI DeepFake Image Detector"
-APP_VERSION = "3.3"          # keep in step with installer.py
+APP_VERSION = "3.3.1"        # keep in step with installer.py
 PUBLISHER = "Obaid"
 
 UNINSTALL_TEXT = """\

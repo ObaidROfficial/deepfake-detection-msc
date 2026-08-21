@@ -4,7 +4,12 @@ Notable changes to the OBI DeepFake Image Detector. The model itself is
 unchanged since 3.0 — every release since has been about making it usable and
 honest about its limits, not about accuracy.
 
-## 3.4 — The installer stopped breaking the thing it had just installed
+Versions follow the usual three-part convention. The middle number moves when
+something is added or behaves differently on purpose; the third moves when
+something that was meant to work already is repaired. So 3.3 introduced the
+desktop application and the macOS bundle, and 3.3.1 only fixes a fault in it.
+
+## 3.3.1 — The installer stopped breaking the thing it had just installed
 
 ### Fixed
 
