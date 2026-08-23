@@ -1,6 +1,6 @@
 # Chapter 7: Critical Evaluation
 
-> **DRAFT v1 — 11 August 2026.** Target 1,700 words.
+> **DRAFT v1, 11 August 2026.** Target 1,700 words.
 > Covers: answers to the research questions, artefact strengths and weaknesses,
 > evaluation of the process, and LO7 (ethics, sustainability, social
 > responsibility, global context) which Lesson 4 requires explicitly.
@@ -13,7 +13,7 @@
 
 Within the distribution they are trained on, very effective: MobileNetV2
 reached 94.3% at an AUC of 0.987, and even logistic regression on 32×32
-greyscale pixels reached 73.6%. Outside it, ineffective — all four fell to
+greyscale pixels reached 73.6%. Outside it, ineffective, since all four fell to
 approximately chance on an unseen manipulation method. The answer therefore
 depends entirely on whether the question means "on the test set" or "in
 deployment", and for the best model those two readings differ by 44.2 accuracy
@@ -36,12 +36,11 @@ approaches?**
 
 In-domain, substantially better: 94.3% and 94.6% for the two CNNs against 78.6%
 for HOG+LBP and 73.6% for logistic regression. Cross-dataset, no better in any
-practical sense — all four sit within three points of chance and no threshold
-in either polarity recovers usable accuracy. The CNNs' AUCs of 0.5593 and
-0.5285 are statistically above chance and better than the pixel baseline, but
-best achievable accuracies of 54.5% and 52.2% are not usable detectors. At
-matched capacity, EfficientNet-B0 gained 0.3 accuracy points in-domain for 85%
-more training time and a worse best validation loss; architectural
+practical sense. All four sit within three points of chance and no threshold in
+either polarity recovers usable accuracy. The CNNs' AUCs of 0.5593 and 0.5285
+are statistically above chance, but best achievable accuracies of 54.5% and
+52.2% are not usable detectors. At matched capacity, EfficientNet-B0 gained 0.3
+accuracy points in-domain for 85% more training time; architectural
 sophistication bought very little here.
 
 **RQ4: How robust is the detection model against manipulated or adversarial
@@ -60,8 +59,8 @@ cross-domain reliability are not merely different but appear to be in tension.
 Across four models the generalisation gap widened monotonically as in-domain
 accuracy improved: 24.7, 30.7, 43.2, 44.2 points. If detectors succeed by
 exploiting generator-specific artefacts, a better detector is partly one
-exploiting them more thoroughly — which offers no protection against a
-generator it has not seen.
+exploiting them more thoroughly, which offers no protection against a generator
+it has not seen.
 
 ## 7.2 Strengths of the artefact
 
@@ -73,23 +72,22 @@ file, and every result in Chapter 6 can be regenerated from a clean clone.
 Dataset independence was verified rather than assumed, before any compute was
 committed. Perceptual hashing found zero overlap across 1,400 sampled real
 images, and Dataset A's mean image retains 1.6 times the edge structure of
-Dataset B's — consistent with FFHQ's landmark alignment and its absence in
-OpenForensics.
+Dataset B's.
 
 The threshold diagnostic separating calibration failure from representation
 failure adds something beyond reporting accuracy: two models can both score 49%
 for entirely different reasons, and which one applies changes what conclusion
 is available. Several predictions were also recorded before the experiments
-that tested them — the robustness prediction was written into the module
-docstring before the suite ran — making those genuine tests rather than
+that tested them. The robustness prediction was written into the module
+docstring before the suite ran, which makes those genuine tests rather than
 post-hoc rationalisation.
 
 The artefact is also usable by somebody who did not build it: a graphical
-installer handles the environment, dependencies and weights, the interface
-needs no command line, and an uninstaller reverses it. That is not an academic
-contribution, but a detector nobody but its author can run is hard to assess,
-and the requirement to communicate the model's limits (F11) means nothing if
-nobody can reach the interface displaying them.
+installer handles the environment, dependencies and weights, and the interface
+needs no command line. That is not an academic contribution, but a detector
+nobody but its author can run is hard to assess, and the requirement to
+communicate the model's limits (F11) means nothing if nobody can reach the
+interface displaying them.
 
 ## 7.3 Weaknesses and limitations
 
@@ -109,23 +107,20 @@ appears.** GANs construct images by repeatedly upsampling, which Frank et al.
 models generate by iterative denoising instead, so that artefact family is
 largely absent, and the better this model becomes at finding GAN upsampling
 traces the less reason there is to expect it to find anything in a diffusion
-image. Corvi et al. (2023) put exactly this question to GAN-built detectors,
-under the compression and resizing real distribution imposes — the two
-conditions the robustness suite here found most damaging.
+image. Corvi et al. (2023) put exactly this question to GAN-built detectors.
 
 Testing bore this out: a visibly synthetic diffusion-generated portrait was
 classified **REAL with reported confidence of 100%**, even after the face was
 correctly detected and cropped (§5.7). This is consistent with the
-cross-dataset result rather than separate from it — Dataset B was a different
+cross-dataset result rather than separate from it. Dataset B was a different
 manipulation method within the same generative family, so a larger failure
 across families is what the account predicts.
 
-The confidence is the more troubling part. The model reported certainty on an
-input it had no basis for judging. A softmax output from a cross-entropy-trained
-network is not a probability of being correct, and here it was actively
-misleading: a user without this report would have received an unambiguous,
-confident, wrong answer — precisely the failure mode Chapter 8 argues is worse
-than no detector at all.
+The confidence is the more troubling part. A softmax output from a
+cross-entropy-trained network is not a probability of being correct, and here it
+was actively misleading: a user without this report would have received an
+unambiguous, confident, wrong answer. That is precisely the failure mode
+Chapter 8 argues is worse than no detector at all.
 
 **Deviation from the proposal.** FaceForensics++ requires a signed licence with
 turnaround measured in weeks and DFDC is approximately 470GB of video that
@@ -134,7 +129,7 @@ defensible but cost comparability, since most published results use FF++.
 
 **Imperfect controls.** Brightness and contrast served as the
 detail-preserving comparison in the robustness suite, but both are
-multiplicative and do alter gradient magnitudes — on a sample image, contrast
+multiplicative and do alter gradient magnitudes. On a sample image, contrast
 −0.4 reduced high-frequency energy to 0.60 of the original. The argument rests
 on rescaling being near-invertible and structure-preserving rather than on it
 leaving frequency content untouched, a weaker claim than a genuinely clean
@@ -150,13 +145,18 @@ identically on transfer.
 **Adversarial scope.** Only FGSM, only white-box. Stronger iterative attacks
 and realistic black-box transfer attacks were not attempted.
 
-**The installer is under-tested relative to the rest of the artefact.** Every
-number in Chapter 6 is reproducible from a clean clone, but the installer's
-most important path — a machine with no suitable Python, where it downloads and
-installs one — was verified by reasoning and by simulating the version checks
-rather than on a genuinely bare machine, none being available. Defects 13 and
-14 both appeared only on a second machine, which suggests this is exactly the
-kind of gap where something is still hiding.
+**The installer's bootstrap path remains untested.** Install, launch and
+uninstall were exercised end to end on both Windows and macOS, using the
+published binaries rather than the local build, and all three succeeded. What
+that does not cover is the branch that matters most: a machine with no suitable
+Python, where the installer downloads and installs one. Both test machines
+already had 3.11, so that path is still verified only by reasoning. The testing
+that was done immediately found defect 17, where the installer handed its own
+Tcl paths to the program it had just installed, so the detector would not start
+from the installer's launch button while working perfectly from the shortcut.
+With defects 13 and 14 having appeared only on a second machine, three faults
+were invisible from the development machine by the development route, which is
+reason enough to treat the untested branch as a real risk.
 
 ## 7.4 Evaluation of the process
 
@@ -165,20 +165,18 @@ accumulated, and a Waterfall plan fixed at proposal stage would have handled
 that badly. Three instances shaped the outcome. The CPU benchmark overestimated
 training time roughly sevenfold. The first two training runs stopped on the
 epoch count rather than convergence, and I reported 78.7% before noticing
-validation accuracy still climbing and above training accuracy — recognising
-that as undertraining led to the resolution ablation. And the first FGSM
-implementation computed gradients against the ground-truth label, producing
-accuracy of exactly zero; asking why a number was *too* clean identified
-label-leaking. In all three the useful step was treating an anomalous result as
-a question rather than an answer.
+validation accuracy still climbing and above training accuracy. And the first
+FGSM implementation computed gradients against the ground-truth label,
+producing accuracy of exactly zero; asking why a number was *too* clean
+identified label-leaking. In all three the useful step was treating an
+anomalous result as a question rather than an answer.
 
 **What I would do differently.** I would fix input resolution by experiment at
 the start rather than defaulting to 128 pixels for speed; that one choice cost
-ten accuracy points and two full training runs. I would set epoch budgets
-generously and let early stopping decide. And I would start the literature
-review in week one rather than fitting it around the implementation, because it
-turned out to explain results I had already observed and would have let me
-predict them instead.
+ten accuracy points and two full training runs. And I would start the
+literature review in week one rather than fitting it around the implementation,
+because it turned out to explain results I had already observed and would have
+let me predict them instead.
 
 ## 7.5 Ethical, social and professional considerations
 
@@ -188,29 +186,27 @@ consent, debriefing and company sign-off under the Arden University Ethics
 Policy (QA 39) did not apply. Ethical approval was obtained before work began
 and no personal data as defined by UK GDPR was processed. The datasets contain
 images of identifiable individuals, but are distributed for research under
-their own licences and were not redistributed here — the repository carries
-download instructions rather than image files.
+their own licences and were not redistributed here, since the repository
+carries download instructions rather than image files.
 
 **Dual-use risk.** Detection research is inherently dual-use, and the
 robustness results identify precise conditions under which this class of
-detector fails — of interest to defenders and evaders alike. I judged
+detector fails, which is of interest to defenders and evaders alike. I judged
 publication appropriate because these weaknesses are already documented in the
-peer-reviewed literature, the attack used is a standard published baseline
-rather than a novel method, and defenders gain more from knowing the operating
-limits of their tools than attackers gain from confirming a known
-vulnerability. The BCS Code of Conduct's requirement of due regard for public
-health, privacy and wellbeing supports disclosing limitations rather than
-concealing them.
+peer-reviewed literature, the attack used is a standard published baseline, and
+defenders gain more from knowing the operating limits of their tools than
+attackers gain from confirming a known vulnerability. The BCS Code of Conduct's
+requirement of due regard for public wellbeing supports disclosing limitations
+rather than concealing them.
 
 **Social responsibility and the deployment question.** The most socially
 significant finding is the failure direction. When the evidence it relies on is
 unavailable this detector does not report uncertainty; it declares images
 authentic. Deployed on compressed social media content it would systematically
 under-report manipulation while appearing to work normally. Given deepfakes are
-used for non-consensual imagery, fraud and political disinformation, a detector
-that silently fails open could do more harm than none, because it confers
-unwarranted confidence. Any deployment should report calibrated confidence and
-flag inputs outside its validated conditions.
+used for non-consensual imagery, fraud and disinformation, a detector that
+silently fails open could do more harm than none, because it confers
+unwarranted confidence.
 
 **Sustainability.** Total compute across all experiments was approximately
 eight hours on a CPU-only consumer laptop, negligible against the resources

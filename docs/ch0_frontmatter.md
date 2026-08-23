@@ -1,6 +1,6 @@
 # Front Matter
 
-> **DRAFT v1 — 11 August 2026.** Title page, abstract, acknowledgements and
+> **DRAFT v1, 11 August 2026.** Title page, abstract, acknowledgements and
 > abbreviations. Contents page and lists of figures/tables are generated
 > automatically during `.docx` assembly and are not drafted here.
 
@@ -15,13 +15,17 @@ with Robustness Evaluation**
 
 Muhammad Obaid Ur Rehman
 
-stu3000
+STU1215887
 
 MSc Advanced Computing Project (COM7014)
 
-Arden University
+MSc Cyber Security
 
-Supervisor: Tony Stark
+Berlin School of Computing, Arden University
+
+Supervisor: Dr. Muhammad Saqib
+
+Second marker: Mr. Sharmarke Gabayre
 
 Submitted October 2026
 
@@ -72,11 +76,11 @@ deployment.
 
 ## Acknowledgements
 
-I would like to thank my supervisor, Tony Stark, for guidance throughout this
+I would like to thank my supervisor, Dr. Muhammad Saqib, for guidance throughout this
 project.
 
-I am grateful to the maintainers of the datasets used here — NVIDIA for the
-Flickr-Faces-HQ dataset, and Le et al. for OpenForensics — and to the
+I am grateful to the maintainers of the datasets used here, NVIDIA for the
+Flickr-Faces-HQ dataset and Le et al. for OpenForensics, and to the
 maintainers of PyTorch, scikit-learn and scikit-image, without which a
 project of this scope would not have been feasible on the hardware available.
 

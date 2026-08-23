@@ -1,40 +1,40 @@
 # Chapter 8: Conclusion and Further Work
 
-> **DRAFT v1 — 11 August 2026.** Target 900 words.
+> **DRAFT v1, 11 August 2026.** Target 900 words.
 
 ---
 
 ## 8.1 Objectives revisited
 
-**Objective 1 — structured literature review.** Achieved. Chapter 2 covers
+**Objective 1, structured literature review.** Achieved. Chapter 2 covers
 generation techniques, detection approaches, benchmark datasets and the
 generalisation and robustness literature, drawing on sixteen sources verified
 against the original papers. Frank et al.'s (2020) finding that GAN frequency
 artefacts originate in generator upsampling proved central, supplying a
 mechanism that explained results first observed empirically. Yan et al. (2023)
 shaped the methodology by establishing that accuracy figures are not reliably
-comparable across papers — which is why every model here is evaluated under one
+comparable across papers, which is why every model here is evaluated under one
 fixed protocol.
 
-**Objective 2 — prepare balanced, reproducible datasets.** Achieved and
+**Objective 2, prepare balanced, reproducible datasets.** Achieved and
 exceeded. Two datasets using genuinely different manipulation methods were
 prepared with seeded, verified-disjoint splits and committed manifests, and
-their independence was verified empirically before training — not in the
+their independence was verified empirically before training, not in the
 original plan, but the cross-dataset argument would have failed had they shared
 a real-image source.
 
-**Objective 3 — implement a CNN with baselines.** Achieved: MobileNetV2 with
+**Objective 3, implement a CNN with baselines.** Achieved: MobileNetV2 with
 two-stage transfer learning, plus two classical baselines chosen to serve
 different diagnostic purposes rather than as a formality.
 
-**Objective 4 — evaluate and compare.** Achieved, with a caveat: the comparison
+**Objective 4, evaluate and compare.** Achieved, with a caveat: the comparison
 produced a conditional answer, the CNN being substantially better in-domain and
 no better outside it.
 
-**Objective 5 — test robustness.** Achieved. Twenty-two degradation settings
+**Objective 5, test robustness.** Achieved. Twenty-two degradation settings
 plus adversarial attack in two label regimes.
 
-**Objective 6 — document the work.** This report. All six were met, with 2 and
+**Objective 6, document the work.** This report. All six were met, with 2 and
 5 going beyond what was specified.
 
 ## 8.2 Key findings
@@ -66,7 +66,7 @@ the transfer failure, and generated predictions recorded before the experiments
 that tested them.
 
 **The detector fails in the dangerous direction.** When high-frequency evidence
-is unavailable — through domain shift or heavy compression — the model does not
+is unavailable, whether through domain shift or heavy compression, the model does not
 express uncertainty. It classifies almost everything as real, predicting "fake"
 for only 7.2% of a balanced unseen set.
 
@@ -84,7 +84,7 @@ drop. The threshold diagnostic separates calibration failure from
 representation failure, which are usually conflated. Generalisation and
 robustness are examined together and shown to share a mechanism, where the
 literature typically treats them separately. And the mechanism was used
-predictively rather than only descriptively — the robustness prediction was
+predictively rather than only descriptively, in that the robustness prediction was
 recorded in the code before the suite ran.
 
 The project also demonstrates that meaningful deepfake detection research is
@@ -93,13 +93,13 @@ approximately eight hours.
 
 ## 8.4 Limitations
 
-The main limitations, discussed fully in Chapter 7, are: a single
-cross-dataset pair rather than a matrix; both datasets GAN-era with no
-diffusion coverage; 20,000 of 100,000 available training images; in-domain
-accuracy roughly three points below published figures; one architecture trained
-to completion; adversarial testing limited to white-box FGSM; and imperfect
-control conditions in the robustness suite, since brightness and contrast are
-multiplicative and do alter gradient magnitudes.
+The main limitations, discussed fully in Chapter 7, are: a single cross-dataset
+pair rather than a matrix; both datasets GAN-era with no diffusion coverage;
+20,000 of 100,000 available training images; in-domain accuracy roughly three
+points below published figures; robustness measured on one architecture only;
+adversarial testing limited to white-box FGSM; and imperfect controls in the
+robustness suite, since brightness and contrast are multiplicative and do alter
+gradient magnitudes.
 
 ## 8.5 Further work
 
@@ -136,6 +136,17 @@ A detector reporting calibrated uncertainty, and flagging inputs outside its
 validated conditions, would be far safer to deploy than one silently returning
 "real" when it has no evidence either way.
 
+**Engineering directions for the artefact.** Separately from the research
+questions above, four changes would widen who can use the detector. Accepting
+video and aggregating across frames is the largest, since §1.7 scopes this work
+to stills and manipulated media mostly circulates as video. Mobile applications
+would put the tool where images are received rather than where they are
+analysed, though the model would need converting to a mobile runtime first.
+Both are helped by shrinking the distribution, currently dominated by a PyTorch
+install of several hundred megabytes rather than by the 8.7MB model, and by
+fetching weights on demand as the installer already does. None of this would
+change a number in Chapter 6, only how many people ever see them.
+
 ## 8.6 Entrepreneurial and practical potential
 
 The artefact is a research prototype, and the honest assessment is that its
@@ -150,8 +161,8 @@ see the operating envelope rather than the best case. That a 94.3% detector
 delivers roughly 56% on a thumbnail is exactly the kind of information that
 should inform procurement and appears on no specification sheet.
 
-More broadly, the results support the view that provenance-based approaches —
-cryptographic signing at capture — are likely to prove more durable than
+More broadly, the results support the view that provenance-based approaches,
+meaning cryptographic signing at capture, are likely to prove more durable than
 artefact-based detection, which is structurally always one generator behind.
 
 ---

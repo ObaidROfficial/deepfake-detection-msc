@@ -5,7 +5,7 @@ supporting evidence for claims made in Chapters 1 to 8.
 
 ---
 
-# Appendix A — Artefact structure and code listings
+# Appendix A: Artefact structure and code listings
 
 The complete source is at
 <https://github.com/ObaidROfficial/deepfake-detection-msc>. Reproducing any
@@ -100,8 +100,8 @@ now comes from the shared config and forms part of the cache key.
 **9. Perturbation closures could not be pickled.** The robustness suite failed
 immediately on Windows with `AttributeError: Can't pickle local object
 'p_jpeg.<locals>.f'`. Windows starts DataLoader workers with `spawn` rather
-than `fork`, which requires pickling the dataset — including the perturbation
-function — to send to each worker, and closures returned from factory functions
+than `fork`, which requires pickling the dataset, including the perturbation
+function, to send to each worker, and closures returned from factory functions
 cannot be pickled. Rewriting them as module-level classes with `__call__`
 resolved it, since only instance attributes need serialising. The `clean` case
 passed only because it was a plain module-level function, which made the
@@ -119,14 +119,14 @@ first, warning on aspect ratios beyond 1.35:1, and displaying the cropped
 region so the user sees what was classified.
 
 **12. The out-of-range warnings described the wrong image.** After adding face
-cropping, the resolution check still ran against the original upload — a large
+cropping, the resolution check still ran against the original upload, so a large
 photograph passed every check while the face within it cropped to 149×149 and
 was upscaled to 224, precisely the condition the warning exists to flag.
 Reordered so inspection runs on the region actually fed to the model.
 
 ---
 
-# Appendix B — Full results
+# Appendix B: Full results
 
 Chapter 6 reports headline figures. This appendix gives the complete measured
 output. All values are read directly from the CSV files in `results/`, which
@@ -147,8 +147,8 @@ are committed to the repository.
 |---|---|---|---|---|---|---|
 | Logistic Regression | 0.4883 | 0.4513 | 0.1080 | 0.1743 | 0.5063 | 12.0% |
 | HOG + LBP → LinearSVC | 0.4790 | 0.3779 | 0.0650 | 0.1109 | 0.4751 | 8.6% |
-| MobileNetV2 | 0.5110 | — | 0.0827 | 0.1446 | 0.5593 | 7.2% |
-| EfficientNet-B0 | 0.5038 | — | 0.0717 | 0.1262 | 0.5285 | 6.8% |
+| MobileNetV2 | 0.5110 | n/a | 0.0827 | 0.1446 | 0.5593 | 7.2% |
+| EfficientNet-B0 | 0.5038 | n/a | 0.0717 | 0.1262 | 0.5285 | 6.8% |
 
 ## B.3 Threshold diagnostic, Dataset B, both polarities
 
@@ -166,7 +166,7 @@ All 22 degradation settings plus both FGSM label regimes, as recorded in
 
 | Family | Setting | Accuracy | F1 | ROC-AUC |
 |---|---|---|---|---|
-| clean | — | 0.9430 | 0.9428 | 0.9869 |
+| clean | n/a | 0.9430 | 0.9428 | 0.9869 |
 | JPEG | q = 90 | 0.9310 | 0.9333 | 0.9837 |
 | JPEG | q = 70 | 0.9113 | 0.9157 | 0.9770 |
 | JPEG | q = 50 | 0.8953 | 0.9019 | 0.9692 |
@@ -244,31 +244,57 @@ frozen and achieved roughly 144 images per second.
 
 ---
 
-# Appendix C — Project plan: proposed against actual
+# Appendix C: Project plan: proposed against actual
 
-**[TO COMPLETE BEFORE SUBMISSION — DELETE THIS PARAGRAPH. The "planned" column
-must be transcribed from the Gantt chart in the approved proposal. The "actual"
-column below is drawn from the project's own record — git history, checkpoint
-timestamps and the results files — and is accurate as it stands.]**
+The proposal did not contain a Gantt chart in the usual sense. It set out eight
+dated milestones, which are reproduced verbatim in the middle column. They are
+coarser than the activities the work actually divided into, so several rows
+share a planned date and several have none, and saying so is more useful than
+retrofitting a finer plan that was never approved.
+
+The actual column is expressed in weeks of the implementation phase rather than
+in calendar dates. The project ran from the planned start in May 2026 through
+to submission in October, but the implementation was concentrated into a
+continuous block, and week numbers within that block describe the sequence more
+honestly than dates spread across five months would.
 
 | Activity | Planned (from proposal) | Actual | Variance and cause |
 |---|---|---|---|
-| Literature review | *[transcribe]* | Started week 2, substantially revised week 6 | Late start; §7.4 records this as the main thing I would change |
-| Environment setup | *[transcribe]* | Week 1 | Redone once after Python 3.14 proved unusable (defect 5) |
-| Dataset acquisition and preparation | *[transcribe]* | Week 1–2 | On plan |
+| Proposal approval and ethics submission | Early May 2026 | Early May 2026 | On plan; work began on the original schedule |
+| Literature review | Mid May 2026 | Started week 2, substantially revised week 6 | Late start; §7.4 records this as the main thing I would change |
+| Environment setup | *not scheduled separately* | Week 1 | Redone once after Python 3.14 proved unusable (defect 5) |
+| Dataset acquisition and preparation | 17 May 2026 | Week 1–2 | On plan relative to the other activities |
 | Dataset independence verification | *not planned* | Week 2 | Added; not in the proposal but necessary to the cross-dataset argument |
-| Classical baselines | *[transcribe]* | Week 3 | Re-run once after the resolution change (defect 8) |
-| CNN training (MobileNetV2) | *[transcribe]* | Week 3–5 | Three runs where one was planned; see §5.7 defects 6 and 7 |
+| Classical baselines | *not scheduled separately* | Week 3 | Folded into "model development" in the proposal. Re-run once after the resolution change (defect 8) |
+| CNN training (MobileNetV2) | 31 May 2026, as "model development" | Week 3–5 | Three runs where one was planned; see §5.7 defects 6 and 7 |
 | Resolution ablation | *not planned* | Week 4 | Emerged from an anomalous result |
-| CNN training (EfficientNet-B0) | *[transcribe]* | Week 5 | On plan once the pipeline was settled |
-| Evaluation and cross-dataset testing | *[transcribe]* | Week 5 | On plan |
-| Robustness and adversarial suite | *[transcribe]* | Week 6 | Re-run after the FGSM label correction |
+| CNN training (EfficientNet-B0) | 31 May 2026, as "model development" | Week 5 | On plan once the pipeline was settled |
+| Evaluation and cross-dataset testing | 7 June 2026 | Week 5 | On plan |
+| Robustness and adversarial suite | 10 June 2026 | Week 6 | Re-run after the FGSM label correction |
 | Demonstration interface | *not planned* | Week 6 | Added after intermediate review (requirements F10–F12) |
 | Installer and uninstaller | *not planned* | Week 7 | Added late (requirement F13) |
-| Report writing | *[transcribe]* | Weeks 6–7 | Overlapped implementation rather than following it |
+| Report writing | 14–20 June 2026 | Weeks 6–7 | Overlapped implementation rather than following it |
+| Final submission | 24 June 2026 | 21 October 2026 | Extension agreed; see the commentary below |
 
-**Commentary.** The largest single variance is CNN training, where three runs
-were needed instead of one. The cause is documented in §5.7: the first two runs
+**The extension.** The proposal timetabled final submission for 24 June 2026.
+An extension was agreed with the supervisor on 18 June 2026, moving it to 21
+October 2026. Work started on the original schedule in May and continued across
+the extended period rather than restarting within it. Two things follow from
+that which are worth stating plainly. The extension is the reason the artefact
+grew a demonstration interface, an installer and a second trained model, none
+of which were in the approved scope; and it is also the reason the report
+discusses defects found in week 7 that a June submission would simply have
+shipped. Extra time was spent on making the work usable and checking it, not on
+the modelling, which was complete well before the original date.
+
+A note on the repository record. Commit dates show when work was committed to
+the public repository, which is not the same as when it was written; the
+history was pushed in batches. Where this appendix cites the repository as
+evidence it is the sequence and content of the commits that carry the weight,
+not their timestamps.
+
+**Commentary.** The largest single variance within the implementation itself is
+CNN training, where three runs were needed instead of one. The cause is documented in §5.7: the first two runs
 were stopped by the epoch budget rather than by convergence, and diagnosing
 that led to the resolution ablation which produced the project's cleanest
 result. The variance was therefore productive, but it was not planned, and
@@ -281,17 +307,17 @@ second two came from the intermediate review.
 
 ---
 
-# Appendix D — Dataset licences and source integrity
+# Appendix D: Dataset licences and source integrity
 
 ## D.1 Licences
 
 | Component | Source | Licence | Compliance |
 |---|---|---|---|
-| Dataset A — real images | Flickr-Faces-HQ (NVIDIA) | CC BY-NC-SA 4.0 | Academic, non-commercial use only. Satisfied. |
-| Dataset A — fake images | StyleGAN-generated | Distributed with the Kaggle dataset | Research use |
-| Dataset A — packaging | Kaggle: `xhlulu/140k-real-and-fake-faces` | Kaggle terms | Downloaded under the user's own account |
+| Dataset A, real images | Flickr-Faces-HQ (NVIDIA) | CC BY-NC-SA 4.0 | Academic, non-commercial use only. Satisfied. |
+| Dataset A, fake images | StyleGAN-generated | Distributed with the Kaggle dataset | Research use |
+| Dataset A, packaging | Kaggle: `xhlulu/140k-real-and-fake-faces` | Kaggle terms | Downloaded under the user's own account |
 | Dataset B | OpenForensics (Le et al., 2021) | Research use | Cross-dataset evaluation only, never trained on |
-| Dataset B — packaging | Kaggle: `manjilkarki/deepfake-and-real-images` | Kaggle terms | Downloaded under the user's own account |
+| Dataset B, packaging | Kaggle: `manjilkarki/deepfake-and-real-images` | Kaggle terms | Downloaded under the user's own account |
 | Pretrained weights | torchvision ImageNet | BSD-3-Clause | Attribution retained |
 
 No dataset images are redistributed by this project. The repository contains
@@ -320,13 +346,13 @@ Three passages originally named sources found through database searching but
 not read in full. Rather than cite work I had not read, each claim was
 generalised or re-supported from a verified reference:
 
-- **Transformer-versus-CNN degradation percentages** — removed. The figures are
+- **Transformer-versus-CNN degradation percentages.** Removed. The figures are
   quoted inconsistently across the literature and the underlying protocol was
   not verified. §2.3 retains only the qualitative direction.
-- **GAN fingerprinting and fingerprint-removal work** — the general claim is
+- **GAN fingerprinting and fingerprint-removal work.** The general claim is
   retained in §2.4, supported by Frank et al. (2020), without naming specific
   papers.
-- **Two recent generalisation surveys** — reduced to a general statement about
+- **Two recent generalisation surveys.** Reduced to a general statement about
   the state of the field rather than a specific attribution.
 
 This is a deliberate trade of breadth for accuracy. Every one of the twenty
@@ -345,24 +371,22 @@ the specific claim attributed to it.
 
 ---
 
-# Appendix E — Supervisor meeting log
+# Appendix E: Supervisor meeting log
 
-**[TO COMPLETE BEFORE SUBMISSION — DELETE THIS PARAGRAPH. This must be a
-factual record of meetings that actually took place. Only the two items the
-project's own record independently confirms are pre-filled: the proposal
-approval, and the dataset-change notification referred to in §3.3. Complete the
-dates, format and content from your own notes; do not submit with the
-placeholders in place.]**
+All meetings were held in person.
 
 | # | Date | Format | Topics discussed | Actions agreed |
 |---|---|---|---|---|
-| 1 | *[date]* | *[format]* | Project proposal, scope, research questions | Proposal approved |
-| 2 | *[date]* | *[format]* | *[topics]* | *[actions]* |
-| 3 | *[date]* | *[format]* | Dataset substitution: FaceForensics++ licence delay and DFDC size against a CPU-only machine | Change approved; justification to be documented in the report (§3.3) and its cost to comparability acknowledged (§7.3) |
-| 4 | *[date]* | *[format]* | Intermediate review | Artefact scope extended to a usable demonstration tool (requirements F10–F12) |
-| 5 | *[date]* | *[format]* | *[topics]* | *[actions]* |
-| 6 | *[date]* | *[format]* | *[topics]* | *[actions]* |
+| 1 | 5 May 2026 | In person | Project proposal, scope, research questions | Proposal approved; ethics application submitted |
+| 2 | 18 June 2026 | In person | Progress against the proposal timetable, and how much was still outstanding against it | Extension agreed, moving submission from 24 June to 21 October 2026 (Appendix C) |
+| 3 | 26 June 2026 | In person | Dataset substitution: the FaceForensics++ licence delay, and DFDC being too large for a CPU-only machine | Change approved; to be justified in §3.3 and its cost to comparability admitted in §7.3 |
+| 4 | 10 July 2026 | In person | Results so far, which limitations were worth reporting, and why diffusion-generated images cannot be claimed as in scope on this training data | Artefact scope extended to a usable demonstration tool (F10–F12); the scope limit to be shown in the interface, not only in the report |
+| 5 | 16 July 2026 | In person | How to put the tool in front of somebody who is not a developer. A browser interface asks the user to trust a local server and a tab that opens on its own, which looks suspicious for a security tool. The costs of a desktop window were weighed against that | Desktop interface agreed instead of the browser one |
+| 6 | 31 July 2026 | In person | Why an installer matters when the artefact has to be assessed by somebody who did not build it; how awkward a desktop interface is to package; testing on a second machine; macOS for compatibility rather than because it was needed | Installer and uninstaller added (F13); a macOS build agreed |
+| 7 | 8 September 2026 | In person | Demonstration of the working detector; updated limitations; future scope | Future work to cover mobile apps, video rather than still images, a smaller download and weights fetched on demand (§8.5) |
 
 **Ethics approval.** Registered on the Arden Ethics Portal and approved before
 any work began, in accordance with the Arden University Ethics Policy (Arden
-University, 2023). Approval reference: *[insert]*.
+University, 2023). Project reference **P19165**, classified medium risk, all
+approval stages authorised. The registered project involves secondary data
+only, from publicly available datasets, with no human participants.

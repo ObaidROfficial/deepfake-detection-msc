@@ -1,6 +1,6 @@
 # Chapter 1: Introduction and Project Framing
 
-> **DRAFT v1 — 11 August 2026.** Target 1,300 words.
+> **DRAFT v1, 11 August 2026.** Target 1,300 words.
 > Written after the results chapters, per the sequence recommended in Lesson 5.
 
 ---
@@ -36,7 +36,7 @@ between papers. Headline accuracies are therefore not straightforwardly
 comparable across studies.
 
 **Generalisation.** A detector is trained on manipulations produced by methods
-that existed when the training set was assembled; a deployed detector will
+that existed when the training set was assembled, and a deployed detector will
 encounter methods that did not. If detection depends on artefacts specific to
 particular generators, accuracy on familiar manipulations may say very little
 about unfamiliar ones.
@@ -53,15 +53,15 @@ hypothesis that they share a cause.
 ## 1.3 Rationale
 
 A single accuracy figure says very little about whether a detector would be
-useful. The interesting question is not *whether* detectors fail outside their
-training distribution — that is established — but *how* and *why*.
+useful. That detectors fail outside their training distribution is already
+established. The interesting question is *how* and *why* they fail.
 
 The distinction matters practically. A detector whose ranking is correct but
-whose threshold is misplaced can be recalibrated; one whose representation
-carries no relevant information cannot; one whose ranking is actively inverted
-is worse than useless. Accuracy alone cannot separate them. There is also a
-resourcing rationale: most published work assumes substantial GPU capacity,
-whereas this project ran entirely on a CPU-only consumer laptop.
+whose threshold is misplaced can be recalibrated. One whose representation
+carries no relevant information cannot, and one whose ranking is actively
+inverted is worse than useless. Accuracy alone cannot separate them. There is
+also a resourcing rationale, in that most published work assumes substantial GPU
+capacity whereas this project ran entirely on a CPU-only consumer laptop.
 
 ## 1.4 Aim
 
@@ -103,22 +103,20 @@ degraded inputs.
 ## 1.7 Scope and limitations
 
 The project addresses **still images and extracted video frames**, not temporal
-analysis of video sequences; approaches exploiting inconsistency across frames
-are a substantial subfield of their own. Two datasets are used, giving one
-cross-method comparison — a larger matrix would be more general but was not
-feasible in the timeframe. Both are **GAN-era**, and since diffusion models are
-increasingly displacing GANs, the conclusions may not extend to
+analysis of video sequences, since approaches exploiting inconsistency across
+frames are a substantial subfield of their own. Two datasets are used, giving
+one cross-method comparison. A larger matrix would be more general but was not
+feasible in the timeframe. Both datasets are **GAN-era**, and since diffusion
+models are increasingly displacing GANs, the conclusions may not extend to
 diffusion-generated content, particularly as the mechanism identified here is
 specific to GAN architecture. Adversarial testing is limited to the Fast
-Gradient Sign Method under white-box conditions; black-box and iterative
+Gradient Sign Method under white-box conditions, and black-box and iterative
 attacks were not attempted.
 
-The approved proposal specified FaceForensics++ and the DFDC corpus. Neither
-proved usable: the former requires a licence agreement with a turnaround
-measured in weeks, the latter is approximately 470GB of video that cannot be
-processed on the available hardware. Substitutes were selected and the
-supervisor notified. Chapter 3 discusses this fully and Chapter 7 acknowledges
-the cost to comparability with published work.
+The approved proposal specified FaceForensics++ and the DFDC corpus, and
+neither proved usable. Substitutes were selected and the supervisor notified.
+Chapter 3 discusses this fully and Chapter 7 acknowledges the cost to
+comparability with published work.
 
 ## 1.8 Summary of findings
 
@@ -126,8 +124,8 @@ The results are stated briefly here so the reader knows where the report is
 heading.
 
 Four models were evaluated: logistic regression on raw pixels, a HOG and LBP
-pipeline with a linear SVM, and two fine-tuned convolutional networks —
-MobileNetV2 and EfficientNet-B0 — at matched trainable capacity. In-domain
+pipeline with a linear SVM, and two fine-tuned convolutional networks,
+MobileNetV2 and EfficientNet-B0, at matched trainable capacity. In-domain
 accuracy rose from 73.6% to 94.6%. On an unseen manipulation method all four
 scored between 47.9% and 51.1%, indistinguishable from chance, so the
 generalisation gap widened monotonically from 24.7 points to 44.2 as the models
@@ -156,16 +154,16 @@ considerations, and the risk register.
 **Chapter 4** describes the design of the pipeline, the model selection
 rationale, and the experimental and evaluation framework.
 
-**Chapter 5** documents the implementation, including the demonstration
-tools - a graphical interface, a command line classifier and the installer that
-packages them - and a detailed account of the defects and misjudgements
+**Chapter 5** documents the implementation, including the demonstration tools
+(a graphical interface, a command line classifier and the installer that
+packages them) and a detailed account of the defects and misjudgements
 encountered and how they were resolved.
 
 **Chapter 6** presents the results: in-domain performance, cross-dataset
 transfer, the resolution ablation, the robustness suite and the adversarial
 evaluation.
 
-**Chapter 7** evaluates the work critically — answering each research question,
+**Chapter 7** evaluates the work critically, answering each research question,
 assessing the artefact's strengths and weaknesses, reflecting on the process,
 and addressing the ethical, social, sustainability and global dimensions of the
 topic.

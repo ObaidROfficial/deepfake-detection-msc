@@ -78,7 +78,7 @@ Saunders, M.N.K., Lewis, P. and Thornhill, A., 2023. *Research methods for
 business students*. 9th ed. Harlow: Pearson Education.
 
 Schwaber, K. and Sutherland, J., 2020. *The Scrum Guide: the definitive guide
-to Scrum — the rules of the game*. Available at:
+to Scrum: the rules of the game*. Available at:
 <https://scrumguides.org/scrum-guide.html> [Accessed 10 August 2026].
 
 Tan, M. and Le, Q.V., 2019. EfficientNet: rethinking model scaling for

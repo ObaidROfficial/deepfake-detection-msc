@@ -1,6 +1,6 @@
 # Chapter 6: Testing, Results and Evaluation
 
-> **DRAFT v1 — 11 August 2026.** Target 2,000 words. Report prose, drawn from
+> **DRAFT v1, 11 August 2026.** Target 2,000 words. Report prose, drawn from
 > `ch5_findings.md`, `ch6_baseline_findings.md` and `ch7_robustness_findings.md`.
 > Figure references correspond to files in `results/figures/`.
 
@@ -25,7 +25,7 @@ threshold-independent.
 Table 6.1 gives performance on the Dataset A test split. All models were
 evaluated at matched input resolution so the comparison is fair.
 
-**Table 6.1 — In-domain performance (Dataset A, n = 4,000)**
+**Table 6.1: In-domain performance (Dataset A, n = 4,000)**
 
 | Model | Accuracy | Precision | Recall | F1 | ROC-AUC |
 |---|---|---|---|---|---|
@@ -34,33 +34,33 @@ evaluated at matched input resolution so the comparison is fair.
 | MobileNetV2 | 0.9430 | 0.9461 | 0.9395 | 0.9428 | 0.9869 |
 | EfficientNet-B0 | **0.9457** | 0.9148 | 0.9830 | **0.9477** | **0.9910** |
 
-The ordering is as expected and the gaps are meaningful. Logistic regression on
-flattened 32×32 greyscale pixels reaches 73.6%, well above chance, confirming
-the task is learnable from very coarse information. The classical pipeline adds
-around five points and both convolutional networks a further sixteen.
+The ordering is as expected. Logistic regression on flattened 32×32 greyscale
+pixels reaches 73.6%, well above chance, confirming the task is learnable from
+very coarse information. The classical pipeline adds around five points and
+both convolutional networks a further sixteen.
 
 Accuracies of 94.3% and 94.6% at AUCs of 0.987 and 0.991 sit roughly three
-points below figures typically reported for this dataset — reasonable given the
-constraints in Chapter 5: 20,000 of 100,000 available training images, CPU-only
-training, and only the trailing blocks unfrozen. The point worth making is that
+points below figures typically reported for this dataset. That is reasonable
+given the constraints in Chapter 5: 20,000 of 100,000 available training
+images, CPU-only training, and only the trailing blocks unfrozen. The point worth making is that
 the generalisation results which follow come from models that work. A poor
 detector failing to generalise would prove very little.
 
 The two networks distribute their errors differently. EfficientNet-B0 has
 markedly higher recall (0.9830 against 0.9395) and lower precision (0.9148
 against 0.9461), predicting "fake" for 53.7% of a balanced set against
-MobileNetV2's 49.6% — the more suspicious of the two, catching more forgeries
-at the cost of more false accusations.
+MobileNetV2's 49.6%. It is the more suspicious of the two, catching more
+forgeries at the cost of more false accusations.
 
 ### Architecture comparison and matched capacity
 
 The two networks were matched on trainable capacity rather than on nominal
 setting. MobileNetV2's feature extractor is 19 small blocks, EfficientNet-B0's
 is 9 much larger stages, so unfreezing the same number would release 16% of one
-network against roughly 79% of the other and any difference would partly
+network against roughly 79% of the other, and any difference would partly
 reflect adaptation capacity rather than architecture. Unfreezing MobileNetV2's
 last 3 blocks and EfficientNet-B0's last 2 stages gives **1,208,642** and
-**1,131,954** trainable parameters — within 6.4% of each other.
+**1,131,954** trainable parameters, within 6.4% of each other.
 
 On that basis EfficientNet-B0's advantage is marginal: 0.3 accuracy points and
 0.004 AUC, for **4.44 hours** of training against **2.40** and a *worse* best
@@ -74,7 +74,7 @@ An early version of the model was trained at 128×128 pixels and reached only
 than the model lacking capacity, the experiment was repeated at 224×224 with
 every other setting held constant.
 
-**Table 6.2 — Effect of input resolution (MobileNetV2)**
+**Table 6.2: Effect of input resolution (MobileNetV2)**
 
 | | 128px | 224px | Change |
 |---|---|---|---|
@@ -85,16 +85,15 @@ Resolution alone was worth ten accuracy points, consistent with Frank et al.
 (2020): the artefacts distinguishing GAN-generated images are concentrated in
 the high-frequency band and arise from generator upsampling, so halving the
 resolution removes precisely that information. The direction of inference is
-worth stating — Frank et al. were not consulted to explain the result after the
-fact. The result came first and their account was then found to predict it.
-Section 6.5 tests a further prediction from the same mechanism.
+worth stating, in that the result came first and their account was then found
+to predict it. Section 6.5 tests a further prediction from the same mechanism.
 
 ## 6.3 Cross-dataset results
 
 Table 6.3 gives the same models evaluated on Dataset B without any retraining
 or adaptation.
 
-**Table 6.3 — Cross-dataset performance (Dataset B, n = 6,000)**
+**Table 6.3: Cross-dataset performance (Dataset B, n = 6,000)**
 
 | Model | Accuracy | Recall | F1 | ROC-AUC | Predicted "fake" |
 |---|---|---|---|---|---|
@@ -119,21 +118,20 @@ absolute gap grows monotonically throughout. Whatever the more capable models
 learned was absorbed entirely by the source domain.
 
 **The failure is not architecture-specific.** MobileNetV2 and EfficientNet-B0
-are structurally different networks — depthwise separable convolutions against
-compound-scaled MBConv blocks — matched to within 6.4% on capacity, and they
-fail identically, both reaching ~94.5% in-domain and both landing within a
-point of chance on unseen manipulations. This removes the most obvious
-objection: that one unlucky architecture choice might explain the result.
+are structurally different networks, matched to within 6.4% on capacity, and
+they fail identically: both reach ~94.5% in-domain and both land within a point
+of chance on unseen manipulations. This removes the most obvious objection, that
+one unlucky architecture choice might explain the result.
 
 The recall figures are also revealing. All four models classify the
-overwhelming majority of Dataset B as real — EfficientNet-B0 predicts "fake"
-for only 6.8% of a set that is 50% fake, MobileNetV2 for 7.2%. Faced with
-unfamiliar manipulations these detectors do not become uncertain; they default
+overwhelming majority of Dataset B as real. EfficientNet-B0 predicts "fake" for
+only 6.8% of a set that is half fake, and MobileNetV2 for 7.2%. Faced with
+unfamiliar manipulations these detectors do not become uncertain. They default
 to declaring images authentic, which for a deployed system is the worse of the
-two failure directions. Notably EfficientNet-B0's in-domain bias runs the
-*other* way, predicting "fake" for 53.7% of the in-domain test set. The
-tendency to declare everything real is therefore specific to the domain shift
-rather than a general conservatism.
+two failure directions. EfficientNet-B0's in-domain bias runs the *other* way,
+predicting "fake" for 53.7% of the in-domain test set, so the tendency to
+declare everything real is specific to the domain shift rather than a general
+conservatism.
 
 ### Distinguishing failure modes
 
@@ -141,11 +139,11 @@ An accuracy near chance is ambiguous. The representation may order real and
 fake correctly with the threshold misplaced, which re-calibration would
 recover, or it may carry no usable information, which nothing would. To
 separate these, the best accuracy achievable at *any* threshold was computed
-for each model in both polarities of the decision rule — both directions
-matter, because an AUC below 0.5 indicates an inverted ranking and searching
-only the conventional direction understates what is retained.
+for each model in both polarities of the decision rule. Both directions matter,
+because an AUC below 0.5 indicates an inverted ranking and searching only the
+conventional direction understates what is retained.
 
-**Table 6.4 — Best achievable accuracy on Dataset B at any threshold**
+**Table 6.4: Best achievable accuracy on Dataset B at any threshold**
 
 | Model | Conventional rule | Inverted rule | Best | Interpretation |
 |---|---|---|---|---|
@@ -159,23 +157,20 @@ This is a representation failure rather than a calibration failure, and it
 cannot be fixed by adjusting an operating point.
 
 It would nevertheless overstate the case to claim nothing transfers. Both CNNs
-achieve cross-dataset AUCs above chance — 0.5593 and 0.5285, several standard
-errors from 0.5 at this sample size — so better representations do transfer
+achieve cross-dataset AUCs above chance, at 0.5593 and 0.5285, several standard
+errors from 0.5 at this sample size, so better representations do transfer
 marginally better than the pixel baseline. But best achievable accuracies of
 54.5% and 52.2% on a balanced problem have no practical value: in-domain
 improvements produce statistically detectable, practically useless gains in
-transfer while the absolute gap widens. The *smaller* network also transferred
-slightly better despite being marginally worse in-domain, which with two
-architectures is not a pattern but is at least not evidence that capacity helps.
+transfer while the absolute gap widens.
 
 The HOG and LBP result deserves a separate note. Its cross-dataset AUC of
 0.4751 is *below* chance, meaning a partially inverted ranking. The underlying
 image statistics show why: within Dataset A real images are sharper than fakes,
-whereas within Dataset B the relationship runs weakly the other way. Gradient
-and texture descriptors capture something real about forgery in both, but the
-direction depends on the manipulation method — fully synthetic GAN faces are
-smoother than photographs, whereas face-swapped regions blended into genuine
-photographs are not.
+whereas within Dataset B the relationship runs weakly the other way. The
+direction of the signal depends on the manipulation method. Fully synthetic GAN
+faces are smoother than photographs, whereas face-swapped regions blended into
+genuine photographs are not.
 
 ## 6.4 Model comparison against project objectives
 
@@ -191,7 +186,7 @@ The robustness suite applied twenty-two perturbation settings to the Dataset A
 test split and re-scored the trained MobileNetV2 model on each. Clean baseline
 accuracy is 0.9430.
 
-**Table 6.5 — Worst-case accuracy by perturbation family**
+**Table 6.5: Worst-case accuracy by perturbation family**
 
 | Family | Strongest setting | Accuracy | Drop |
 |---|---|---|---|
@@ -210,17 +205,15 @@ merely rescaling intensities. Grouping the families accordingly:
 - Rescaling (brightness, contrast): mean worst-case accuracy **0.9076**
 
 The gap is 21 points and the prediction is supported. A ±40% change in
-brightness or contrast — large and clearly visible — costs at most 3.8 accuracy
-points; downscaling to 32 pixels and back costs 38.5.
+brightness or contrast, which is large and clearly visible, costs at most 3.8
+accuracy points, while downscaling to 32 pixels and back costs 38.5.
 
 Gaussian noise fits the same account despite being additive rather than
 destructive: it does not remove fine detail but buries it, and the effect is
-comparable. The unifying statement is that this detector depends on the
-high-frequency band and fails whether that band is removed or masked, while
-tolerating changes preserving the spatial pattern of gradients. This is the
-second independent confirmation of one mechanism — the resolution ablation and
-this robustness profile were predicted by the same explanation and both came
-out as expected.
+comparable. This detector depends on the high-frequency band and fails whether
+that band is removed or masked, while tolerating changes that preserve the
+spatial pattern of gradients. The resolution ablation and this robustness
+profile were predicted by the same explanation and both came out as expected.
 
 At the strongest downscaling setting F1 falls to 0.2432 while accuracy is
 0.5580: the model again stops predicting "fake" almost entirely, mirroring its
@@ -240,7 +233,7 @@ should be reported alongside headline figures rather than omitted.
 The Fast Gradient Sign Method was applied as a white-box attack on a
 500-image subset.
 
-**Table 6.6 — FGSM results**
+**Table 6.6: FGSM results**
 
 | ε | Accuracy | ROC-AUC |
 |---|---|---|
@@ -262,23 +255,22 @@ The residual 5.2% has a specific explanation. Clean accuracy is 94.3%, so about
 from the model's own predicted label it moves those toward the correct answer.
 The residual is essentially the population that was wrong to begin with, which
 confirms the attack behaves as intended. It also saturates immediately:
-accuracy at ε = 0.005 and ε = 0.01 is identical, with no gradual degradation
-curve, so the smallest perturbation tested already flips every confident
-prediction.
+accuracy at ε = 0.005 and ε = 0.01 is identical, so the smallest perturbation
+tested already flips every confident prediction.
 
 A methodological point applies here. An initial implementation computed the
 gradient against the ground-truth label rather than the model's prediction,
 producing accuracy of exactly 0.0000. On a binary task that mechanically
-guarantees inversion regardless of actual robustness — the attack is given the
-answer, the known label-leaking effect. The figures above use the predicted
+guarantees inversion regardless of actual robustness, because the attack is
+given the answer. This is the known label-leaking effect. The figures above use the predicted
 label, the realistic threat model since an attacker probing a deployed system
 observes its output rather than the truth. The correction changed the number
-from 0.0% to 5.2% but not the conclusion.
+but not the conclusion.
 
-The scope should also be stated plainly. FGSM is a white-box attack requiring
-access to model gradients. It does not show the detector is useless in general,
-but that it is unsuitable wherever an adversary can obtain model access.
-Black-box transfer attacks are considerably harder and were not tested.
+FGSM is a white-box attack requiring access to model gradients. It does not
+show the detector is useless in general, but that it is unsuitable wherever an
+adversary can obtain model access. Black-box transfer attacks are considerably
+harder and were not tested.
 
 ---
 

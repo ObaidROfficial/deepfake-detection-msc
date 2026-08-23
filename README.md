@@ -2,8 +2,8 @@
 
 MSc Advanced Computing Project (COM7014) — Arden University
 
-**Author:** Muhammad Obaid Ur Rehman (stu3000)
-**Supervisor:** Tony Stark
+**Author:** Muhammad Obaid Ur Rehman (STU1215887)
+**Supervisor:** Dr. Muhammad Saqib
 **Submission:** 21 October 2026
 
 ---

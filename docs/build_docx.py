@@ -70,7 +70,7 @@ for _sec in FIGURES:
     lst = []
     for fn, cap in FIGURES[_sec]:
         _n += 1
-        lst.append((fn, f"Figure 6.{_n} — {cap}"))
+        lst.append((fn, f"Figure 6.{_n}: {cap}"))
     FIGURES[_sec] = lst
 TOTAL_FIGURES = _n
 
@@ -383,12 +383,14 @@ def main():
         ("", 12, False),
         ("", 12, False),
         ("Muhammad Obaid Ur Rehman", 14, False),
-        ("stu3000", 12, False),
+        ("STU1215887", 12, False),
         ("", 12, False),
         ("MSc Advanced Computing Project (COM7014)", 13, False),
-        ("Arden University", 13, False),
+        ("MSc Cyber Security", 13, False),
+        ("Berlin School of Computing, Arden University", 13, False),
         ("", 12, False),
-        ("Supervisor: Tony Stark", 12, False),
+        ("Supervisor: Dr. Muhammad Saqib", 12, False),
+        ("Second marker: Mr. Sharmarke Gabayre", 12, False),
         ("", 12, False),
         ("Submitted October 2026", 12, False),
     ]:

@@ -10,7 +10,7 @@
 project:
   name: "AI-Based Deepfake Detection Using Machine Learning with Robustness Evaluation"
   student: "Muhammad Obaid Ur Rehman"
-  student_id: "stu3000"
+  student_id: "STU1215887"
   module: "COM7014"
   seed: 42                    # used everywhere: sampling, splits, torch, numpy
 

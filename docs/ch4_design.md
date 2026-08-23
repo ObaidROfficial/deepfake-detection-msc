@@ -1,6 +1,6 @@
 # Chapter 4: Design
 
-> **DRAFT v1 — 11 August 2026.** Target 1,400 words.
+> **DRAFT v1, 11 August 2026.** Target 1,400 words.
 
 ---
 
@@ -43,11 +43,10 @@ the others.
 already present so an interrupted download can be resumed.
 
 **Inspect** walks the extracted directories and infers a label for every image
-from its folder path. The two datasets use different naming conventions —
-lowercase `real`/`fake` in one, capitalised in the other — so label inference
-checks each path component against a token set rather than assuming a fixed
-structure. Files that cannot be labelled are excluded and counted rather than
-silently assigned a default.
+from its folder path. The two datasets use different naming conventions, so
+label inference checks each path component against a token set rather than
+assuming a fixed structure. Files that cannot be labelled are excluded and
+counted rather than silently assigned a default.
 
 **Subset** draws the working splits, with three properties designed in.
 *Stratification*: equal numbers per class, so accuracy is meaningful and 50% a
@@ -56,8 +55,7 @@ train/validation/test folders and each subset is drawn from the corresponding
 one, since a random draw across the whole dataset would put images the authors
 placed in training into the test set. *Verified disjointness*: the code asserts
 no path appears in more than one split and fails immediately if it does,
-because a train/test leak would invalidate every number in the report and the
-check costs a fraction of a second.
+because a train/test leak would invalidate every number in the report.
 
 Paths are stored relative to the project root, so manifests are portable and do
 not embed the developer's directory structure.
@@ -73,8 +71,8 @@ weak floor applying no feature engineering. Its role is diagnostic: if it
 scores highly, the task is trivial and the project's premise is questionable.
 
 **HOG with Local Binary Patterns, classified by a linear SVM**, is a genuine
-classical computer vision pipeline — HOG encoding gradient orientations, LBP
-local texture. It was chosen partly because exploratory analysis identified
+classical computer vision pipeline, with HOG encoding gradient orientations and
+LBP local texture. It was chosen partly because exploratory analysis identified
 sharpness as the strongest simple discriminator, and these are precisely
 gradient and texture descriptors. Since Frank et al. (2020) locate the GAN
 artefact signal in the high-frequency band, this baseline measures how much of
@@ -112,7 +110,7 @@ Every model is evaluated under two conditions: **in-domain**, on the held-out
 test split of Dataset A, and **cross-dataset**, on Dataset B, produced by a
 different manipulation method and unseen by any model at any stage. The
 critical design property is that Dataset B is never used for training,
-validation, hyperparameter selection or early stopping — any use at all would
+validation, hyperparameter selection or early stopping. Any use at all would
 contaminate it as a measure of transfer.
 
 ### Evaluation framework
@@ -146,15 +144,14 @@ Six perturbation families were selected to span two categories:
 | Contrast shift | ±20%, ±40% | Rescaling |
 
 The destructive/rescaling split is the design's analytical core. If the
-detector depends on high-frequency detail — as Frank et al. (2020) would
-predict for GAN imagery — destructive perturbations should damage it
-substantially more than rescaling ones. Multiple magnitudes per family make the
+detector depends on high-frequency detail, as Frank et al. (2020) would predict
+for GAN imagery, then destructive perturbations should damage it substantially
+more than rescaling ones. Multiple magnitudes per family make the
 shape of the degradation curve visible, not just its endpoint. Brightness and
 contrast were intended as controls but are imperfect ones, both being
-multiplicative and so altering gradient magnitudes; this was measured rather
-than discovered later. Perturbations are applied *before* the model's normal
-evaluation transform, so they simulate degradation in the wild rather than an
-artefact of preprocessing.
+multiplicative and so altering gradient magnitudes. Perturbations are applied
+*before* the model's normal evaluation transform, so they simulate degradation
+in the wild rather than an artefact of preprocessing.
 
 **Adversarial design.** FGSM was chosen as the standard published baseline. The
 design specifies using the model's own predicted label rather than the
@@ -169,12 +166,10 @@ it usable. Four design decisions shaped the interface that does.
 **One inference path, two front ends.** A desktop application (`app.py`) and a
 command line tool (`predict.py`) share the same preprocessing and inference
 code, the interface importing from the tool. The graphical interface is the
-primary one, on the reasoning that the people best placed to judge whether a
-detector is usable are not necessarily people who are comfortable at a
-terminal; the command line tool remains for batch work and development.
-Duplicating the pipeline would let the two diverge silently — a difference in
-resizing or normalisation would give different verdicts for the same image with
-nothing to signal it.
+primary one, since the people best placed to judge whether a detector is usable
+are not necessarily comfortable at a terminal. Duplicating the pipeline would
+let the two diverge silently, since a difference in resizing or normalisation
+would give different verdicts for the same image with nothing to signal it.
 
 **Face detection before classification.** The model was trained on tightly
 cropped 256×256 faces. In a half-length portrait the face may occupy a fifth of
@@ -197,12 +192,11 @@ systematically overconfident.
 non-developer can use is worth nothing if reaching it means cloning a
 repository and running a shell script, so the design treats installation as
 part of the deliverable rather than as documentation. A graphical installer
-handles the environment, dependencies, weights and a desktop shortcut, and a
-matching uninstaller removes them, leaving alone by default the shared caches
-other Python software depends on. Weights are published as release assets
-rather than committed, so a reviewer reaches a working detector without the
-datasets or any training. Section 5.5 covers the build and the circular
-dependency it had to work around.
+handles the environment, dependencies, weights and a shortcut, and a matching
+uninstaller removes them. Weights are published as release assets rather than
+committed, so a reviewer reaches a working detector without the datasets or any
+training. Section 5.5 covers the build and the circular dependency it had to
+work around.
 
 ## 4.7 Reproducibility design
 
@@ -213,9 +207,9 @@ rather than hand-assembled.
 
 One honest limitation: CPU training is not bit-for-bit deterministic across
 machines, because some backend kernels vary. What is exactly reproducible is
-the data sampling, the splits and the evaluation protocol — the elements
-affecting the validity of the comparisons rather than the third decimal place
-of a metric.
+the data sampling, the splits and the evaluation protocol. Those are the
+elements affecting the validity of the comparisons, rather than the third
+decimal place of a metric.
 
 ---
 
