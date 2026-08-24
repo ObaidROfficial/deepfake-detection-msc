@@ -24,7 +24,7 @@ on a GitHub release rather than into the repository.
 
 WHY THE BUNDLE IS SMALL
 Only the installer is compiled, and it imports nothing beyond tkinter and the
-standard library. PyTorch, Gradio and the rest are downloaded at install time
+standard library. PyTorch and the rest are downloaded at install time
 into a virtual environment on the user's machine. Bundling them instead would
 push each download past a gigabyte and make the build fragile.
 
