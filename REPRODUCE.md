@@ -79,7 +79,8 @@ The executables are not code-signed, so Windows shows "Windows protected your
 PC" (*More info* → *Run anyway*) and macOS refuses a double-click (right-click
 → *Open* → confirm). Details in [installer/README.md](installer/README.md).
 
-Once it finishes, use the desktop shortcut and skip to step 2.
+Once it finishes, open it from the desktop shortcut on Windows or from the
+Applications folder on macOS, and skip to step 2.
 
 ### 1b. Install — one command
 
@@ -133,8 +134,8 @@ into `models/`.
 
 ### 2. Launch the interface
 
-If you used the installer, the desktop shortcut does this. From a source
-install:
+If you used the installer, the desktop shortcut (Windows) or the app in
+Applications (macOS) does this. From a source install:
 
 ```powershell
 .\run.ps1        # or ./run.sh on macOS/Linux
@@ -372,10 +373,16 @@ the most likely cause.
 
 ## Removing it afterwards
 
-**If you used the installer (Path B),** run
-`OBI-DeepFake-Image-Detector-Uninstall` from the install folder. It shows what
-will be removed and how much space that frees before it does anything, and it
-covers the shared caches with the same default described below.
+**If you used the installer (Path B) on Windows,** run
+`OBI-DeepFake-Image-Detector-Uninstall.exe` from the install folder, where the
+installer put it. It shows what will be removed and how much space that frees
+before it does anything, and it covers the shared caches with the same default
+described below.
+
+**If you used the installer on macOS,** drag the app from Applications to the
+Trash. The virtual environment, the weights and the code all sit inside the
+bundle, so that is a complete removal apart from the shared PyTorch cache in
+the table below.
 
 **If you installed from source,** read on.
 

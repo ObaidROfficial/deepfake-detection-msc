@@ -153,12 +153,13 @@ architecture-specific.
 On macOS, unzip first: the executable bit does not survive a plain download,
 which is why that asset is a `.zip` rather than a bare file.
 
-It sets everything up, downloads the trained weights, and puts a shortcut on
-your desktop. **Python is not required beforehand** — if the machine has
-nothing suitable, the installer offers to download the official Python 3.11.9
-from python.org, checks it against the published checksum, and installs it.
-Around 700MB is downloaded in total, so it needs an internet connection and a
-few minutes.
+It sets everything up and downloads the trained weights. On Windows it puts a
+shortcut on your desktop; on macOS it installs an app into your Applications
+folder, which is where a Mac user expects to find it. **Python is not required
+beforehand.** If the machine has nothing suitable, the installer offers to
+download the official Python 3.11.9 from python.org, checks it against the
+published checksum, and installs it. Around 700MB is downloaded in total, so it
+needs an internet connection and a few minutes.
 
 "Nothing suitable" means no Python between 3.9 and 3.13. A machine running only
 Python 3.14 counts: numpy has no wheel for it and falls back to a source build
@@ -177,8 +178,9 @@ Two things to expect, both because these executables are not code-signed
 How the installer works, and how to build it yourself, is in
 [installer/README.md](installer/README.md).
 
-To remove it later, run `OBI-DeepFake-Image-Detector-Uninstall` from the
-install folder, or see [Uninstalling](#uninstalling).
+To remove it later: on Windows run the uninstaller that was placed in the
+install folder, and on macOS drag the app from Applications to the Trash. See
+[Uninstalling](#uninstalling).
 
 ### Option 2 — from source
 
@@ -277,7 +279,7 @@ deepfake-detection-msc/
 ├── uninstall.ps1 / .sh      # remove a source install
 ├── installer/               # the GUI installer shipped on Releases
 │   ├── installer.py         #   welcome -> options -> progress -> finish
-│   ├── uninstaller.py       #   GUI uninstaller, installed alongside the app
+│   ├── uninstaller.py       #   GUI uninstaller, carried inside the Windows installer
 │   └── build.py             #   compiles both with PyInstaller
 ├── config.yaml              # every setting lives here
 ├── requirements.txt         # + requirements-lock.txt with exact versions
@@ -315,9 +317,16 @@ python src\predict.py --folder images\ --csv out.csv   # batch
 
 ### Uninstalling
 
-**If you used the installer.** Run `OBI-DeepFake-Image-Detector-Uninstall` from
-the install folder (or the desktop shortcut folder on macOS). It removes the
+**If you used the installer on Windows.** Run
+`OBI-DeepFake-Image-Detector-Uninstall.exe` from the install folder. The
+installer puts it there, so it is not a separate download. It removes the
 application, its virtual environment, the model weights and the shortcut.
+
+**If you used the installer on macOS.** Drag the app from Applications to the
+Trash. Everything the program uses lives inside the bundle, so nothing is left
+behind except the shared PyTorch cache in your home folder, which other Python
+software may also be using. There is no uninstaller on macOS because there is
+nothing for one to do.
 
 **If you installed from source.**
 
