@@ -102,11 +102,11 @@ degraded inputs.
 
 ## 1.7 Scope and limitations
 
-The project addresses **still images and extracted video frames**, not temporal
+The project addresses still images and extracted video frames, not temporal
 analysis of video sequences, since approaches exploiting inconsistency across
 frames are a substantial subfield of their own. Two datasets are used, giving
 one cross-method comparison. A larger matrix would be more general but was not
-feasible in the timeframe. Both datasets are **GAN-era**, and since diffusion
+feasible in the timeframe. Both datasets are GAN-era, and since diffusion
 models are increasingly displacing GANs, the conclusions may not extend to
 diffusion-generated content, particularly as the mechanism identified here is
 specific to GAN architecture. Adversarial testing is limited to the Fast
@@ -118,30 +118,7 @@ neither proved usable. Substitutes were selected and the supervisor notified.
 Chapter 3 discusses this fully and Chapter 7 acknowledges the cost to
 comparability with published work.
 
-## 1.8 Summary of findings
-
-The results are stated briefly here so the reader knows where the report is
-heading.
-
-Four models were evaluated: logistic regression on raw pixels, a HOG and LBP
-pipeline with a linear SVM, and two fine-tuned convolutional networks,
-MobileNetV2 and EfficientNet-B0, at matched trainable capacity. In-domain
-accuracy rose from 73.6% to 94.6%. On an unseen manipulation method all four
-scored between 47.9% and 51.1%, indistinguishable from chance, so the
-generalisation gap widened monotonically from 24.7 points to 44.2 as the models
-improved. Because the two CNNs are structurally very different and fail
-identically, this is not attributable to one architecture choice. A threshold
-diagnostic confirmed representation failure rather than calibration failure: no
-threshold in either polarity recovers usable accuracy.
-
-Robustness testing showed the detector is highly sensitive to any perturbation
-removing or masking high-frequency detail and largely insensitive to changes
-preserving it. Under white-box adversarial attack at an imperceptible
-perturbation, accuracy falls from 94.3% to 5.2% and the ranking inverts. A
-single mechanism accounts for both sets of results, and it was used to make
-predictions recorded before the experiments that tested them.
-
-## 1.9 Report structure
+## 1.8 Report structure
 
 **Chapter 2** reviews the literature on generation techniques, detection
 approaches, benchmark datasets, generalisation and robustness, and identifies

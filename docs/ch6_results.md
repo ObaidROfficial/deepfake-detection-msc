@@ -42,32 +42,30 @@ both convolutional networks a further sixteen.
 Accuracies of 94.3% and 94.6% at AUCs of 0.987 and 0.991 sit roughly three
 points below figures typically reported for this dataset. That is reasonable
 given the constraints in Chapter 5: 20,000 of 100,000 available training
-images, CPU-only training, and only the trailing blocks unfrozen. The point worth making is that
-the generalisation results which follow come from models that work. A poor
-detector failing to generalise would prove very little.
+images, CPU-only training, and only the trailing blocks unfrozen. The
+generalisation results that follow therefore come from models that work, which
+matters because a poor detector failing to generalise would prove very little.
 
 The two networks distribute their errors differently. EfficientNet-B0 has
-markedly higher recall (0.9830 against 0.9395) and lower precision (0.9148
-against 0.9461), predicting "fake" for 53.7% of a balanced set against
-MobileNetV2's 49.6%. It is the more suspicious of the two, catching more
-forgeries at the cost of more false accusations.
+markedly higher recall and lower precision, making it the more suspicious of
+the two: it catches more forgeries at the cost of more false accusations.
 
-### Architecture comparison and matched capacity
+### 6.2.1 Architecture comparison and matched capacity
 
 The two networks were matched on trainable capacity rather than on nominal
 setting. MobileNetV2's feature extractor is 19 small blocks, EfficientNet-B0's
 is 9 much larger stages, so unfreezing the same number would release 16% of one
 network against roughly 79% of the other, and any difference would partly
 reflect adaptation capacity rather than architecture. Unfreezing MobileNetV2's
-last 3 blocks and EfficientNet-B0's last 2 stages gives **1,208,642** and
-**1,131,954** trainable parameters, within 6.4% of each other.
+last 3 blocks and EfficientNet-B0's last 2 stages gives 1,208,642 and
+1,131,954 trainable parameters, within 6.4% of each other.
 
 On that basis EfficientNet-B0's advantage is marginal: 0.3 accuracy points and
-0.004 AUC, for **4.44 hours** of training against **2.40** and a *worse* best
+0.004 AUC, for 4.44 hours of training against 2.40 and a *worse* best
 validation loss (0.1469 against 0.1390). At this scale, on this hardware, the
 more sophisticated architecture cost 85% more compute for no meaningful gain.
 
-### The effect of input resolution
+### 6.2.2 The effect of input resolution
 
 An early version of the model was trained at 128×128 pixels and reached only
 78.7% accuracy. Suspecting that downscaling was discarding the evidence rather
@@ -84,9 +82,9 @@ every other setting held constant.
 Resolution alone was worth ten accuracy points, consistent with Frank et al.
 (2020): the artefacts distinguishing GAN-generated images are concentrated in
 the high-frequency band and arise from generator upsampling, so halving the
-resolution removes precisely that information. The direction of inference is
-worth stating, in that the result came first and their account was then found
-to predict it. Section 6.5 tests a further prediction from the same mechanism.
+resolution removes precisely that information. The result came first here, and
+their account was found afterwards to predict it. Section 6.5 tests a further
+prediction from the same mechanism.
 
 ## 6.3 Cross-dataset results
 
@@ -112,10 +110,9 @@ cross-dataset        48.8%     47.9%         51.1%             50.4%
 generalisation gap    24.7      30.7          43.2              44.2
 ```
 
-In-domain accuracy rises by 21 points across the four models. Cross-dataset
-accuracy varies by 3 and never leaves the neighbourhood of chance, so the
-absolute gap grows monotonically throughout. Whatever the more capable models
-learned was absorbed entirely by the source domain.
+Cross-dataset accuracy varies by three points and never leaves the
+neighbourhood of chance, so the gap grows monotonically. Whatever the more
+capable models learned was absorbed entirely by the source domain.
 
 **The failure is not architecture-specific.** MobileNetV2 and EfficientNet-B0
 are structurally different networks, matched to within 6.4% on capacity, and
@@ -133,7 +130,7 @@ predicting "fake" for 53.7% of the in-domain test set, so the tendency to
 declare everything real is specific to the domain shift rather than a general
 conservatism.
 
-### Distinguishing failure modes
+### 6.3.1 Distinguishing failure modes
 
 An accuracy near chance is ambiguous. The representation may order real and
 fake correctly with the threshold misplaced, which re-calibration would
@@ -172,6 +169,55 @@ direction of the signal depends on the manipulation method. Fully synthetic GAN
 faces are smoother than photographs, whereas face-swapped regions blended into
 genuine photographs are not.
 
+### 6.3.2 A direct look at the frequency content
+
+Every result above probes the frequency account indirectly, by perturbing an
+input and watching accuracy move. That shows the model is *sensitive* to
+high-frequency content but says nothing about whether a real/fake difference
+actually resides there in the images. Measuring the data settles that
+separately from the model.
+
+For 120 images per class in each dataset, the image was converted to greyscale,
+windowed to stop the border leaking into the transform, and its two-dimensional
+Fourier power averaged over rings of constant spatial frequency. Averaging
+those profiles by class gives Figure 6.22. The mean difference in log power
+between the classes, by band, is in Table 6.7.
+
+**Table 6.7: Mean log10 power difference between fake and real, by frequency band**
+
+| Band (cycles per pixel) | Dataset A | Dataset B |
+|---|---|---|
+| 0.00 to 0.10 (low) | +0.045 | −0.082 |
+| 0.10 to 0.25 (mid) | −0.017 | −0.010 |
+| 0.25 to 0.50 (high) | −0.043 | **+0.229** |
+
+Two things stand out, and the first is inconvenient for the account this
+report has been building.
+
+In **Dataset A**, the dataset the models were trained on, the two curves are
+almost indistinguishable. The high-band difference is −0.043 in log power,
+meaning the fakes are marginally smoother, but the profiles overlap for most
+of the range. Whatever the CNN exploits to reach 94.3% is therefore *not* a
+simple difference in how much high-frequency energy an image carries, because
+at this level of description there is barely a difference to exploit. The
+discriminating structure must be finer than a radial average can see: local
+rather than global, or carried in phase and orientation rather than magnitude.
+
+In **Dataset B** there is a clear separation above roughly 0.2 cycles per
+pixel, and it runs the *other way*: the fakes carry about 0.23 more log power
+than the reals, five times the size of the Dataset A gap and opposite in sign.
+That is consistent with the two failures reported above. A detector tuned on
+images where fakes are, if anything, slightly smoother meets a dataset where
+fakes are measurably sharper, and the HOG and LBP pipeline's below-chance AUC
+of 0.4751 is what an inverted class relationship would produce.
+
+This does not establish what the CNN learned, and it is not offered as proof
+of a mechanism. What it does is narrow the claim. The frequency account
+survives as an explanation of *transfer failure*, where a measurable and
+reversed difference exists between the datasets, and it weakens as an
+explanation of *in-domain success*, where the measurement finds almost nothing
+to explain. Section 7.1 states the research-question answer in those terms.
+
 ## 6.4 Model comparison against project objectives
 
 Objective 4 required comparing the developed model against baselines.
@@ -201,8 +247,8 @@ The prediction recorded in section 6.2 was that perturbations destroying
 high-frequency information should damage the detector far more than those
 merely rescaling intensities. Grouping the families accordingly:
 
-- Destructive (JPEG, blur, downscale): mean worst-case accuracy **0.6937**
-- Rescaling (brightness, contrast): mean worst-case accuracy **0.9076**
+- Destructive (JPEG, blur, downscale): mean worst-case accuracy 0.6937
+- Rescaling (brightness, contrast): mean worst-case accuracy 0.9076
 
 The gap is 21 points and the prediction is supported. A ±40% change in
 brightness or contrast, which is large and clearly visible, costs at most 3.8
@@ -210,17 +256,19 @@ accuracy points, while downscaling to 32 pixels and back costs 38.5.
 
 Gaussian noise fits the same account despite being additive rather than
 destructive: it does not remove fine detail but buries it, and the effect is
-comparable. This detector depends on the high-frequency band and fails whether
-that band is removed or masked, while tolerating changes that preserve the
-spatial pattern of gradients. The resolution ablation and this robustness
-profile were predicted by the same explanation and both came out as expected.
+comparable. The pattern is one of a detector relying on the high-frequency
+band, failing whether that band is removed or masked while tolerating changes
+that preserve the spatial pattern of gradients. The resolution ablation and
+this robustness profile were predicted by the same explanation and both came
+out as expected, which makes the explanation a useful one without making it
+the only possible one.
 
 At the strongest downscaling setting F1 falls to 0.2432 while accuracy is
 0.5580: the model again stops predicting "fake" almost entirely, mirroring its
 behaviour on Dataset B. The same failure signature appears whenever the
 high-frequency evidence is unavailable, whatever the cause.
 
-### Practical operating range
+### 6.5.1 Practical operating range
 
 At JPEG quality 50 and above, which covers typical social media re-encoding,
 accuracy stays at or above 0.895; below that it degrades quickly. A detector

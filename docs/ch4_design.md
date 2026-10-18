@@ -62,7 +62,7 @@ not embed the developer's directory structure.
 
 ## 4.3 Model selection
 
-### Baselines
+### 4.3.1 Baselines
 
 Two baselines were designed, with different purposes.
 
@@ -79,7 +79,7 @@ artefact signal in the high-frequency band, this baseline measures how much of
 the task is solvable from exactly the signal expected to be
 generator-specific.
 
-### CNN
+### 4.3.2 CNN
 
 **MobileNetV2** (Sandler et al., 2018), ImageNet-pretrained, was selected as
 the primary model, explicitly as a compute trade-off: depthwise separable
@@ -94,7 +94,7 @@ Transfer learning was chosen over training from scratch: with 20,000 images a
 randomly initialised network would almost certainly underperform, and ImageNet
 features are a useful starting point for low-level texture and edge detection.
 
-### Two-stage training design
+### 4.3.3 Two-stage training design
 
 Stage one freezes the entire backbone and trains only the classifier head,
 letting the new output layer reach a sensible region before gradients disturb
@@ -113,7 +113,7 @@ critical design property is that Dataset B is never used for training,
 validation, hyperparameter selection or early stopping. Any use at all would
 contaminate it as a measure of transfer.
 
-### Evaluation framework
+### 4.4.1 Evaluation framework
 
 Accuracy, precision, recall, F1 and ROC-AUC are computed for every
 model-condition pair. Accuracy alone is insufficient: a model predicting a
@@ -125,14 +125,17 @@ pattern where accuracy conceals it.
 misplaced threshold with the ordering intact, which is recoverable, and a
 representation carrying no usable information, which is not. The design
 therefore computes the best accuracy achievable at any threshold, in both
-polarities. If a model's AUC falls below 0.5 its ranking is inverted, and
+polarities, as Figure 4.1 shows. If a model's AUC falls below 0.5 its ranking is inverted, and
 searching only the conventional direction understates what the representation
 retains; the first implementation tested one direction and would have
 mislabelled a reversed-sign result as total failure.
 
 ## 4.5 Robustness suite design
 
-Six perturbation families were selected to span two categories:
+Six perturbation families were selected to span two categories, set out in
+Table 4.1.
+
+**Table 4.1: Perturbation families, settings and category**
 
 | Family | Settings | Category |
 |---|---|---|

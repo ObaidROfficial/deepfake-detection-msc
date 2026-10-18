@@ -90,7 +90,11 @@ notified before the change was implemented.
 
 ## 3.4 Requirements
 
-### Functional requirements
+### 3.4.1 Functional requirements
+
+Table 3.1 lists the functional requirements and records whether each was met.
+
+**Table 3.1: Functional requirements and the outcome for each**
 
 | ID | Requirement | Met |
 |---|---|---|
@@ -124,7 +128,11 @@ a tool reporting only a verdict and a confidence figure would have been
 actively misleading. Surfacing the operating limits is therefore a consequence
 of Chapter 6, not an interface preference.
 
-### Non-functional requirements
+### 3.4.2 Non-functional requirements
+
+The non-functional requirements are given in Table 3.2.
+
+**Table 3.2: Non-functional requirements and the outcome for each**
 
 | ID | Requirement | Met |
 |---|---|---|
@@ -161,9 +169,14 @@ than an omission.
 The datasets do contain images of identifiable individuals, which is
 unavoidable in facial forensics research, and three mitigations apply. They are
 distributed by their creators for research use under their own licence terms.
-No images are redistributed here, the repository containing download scripts
-rather than image data. And no attempt was made to identify, contact or link
-any depicted individual.
+The repository contains download scripts rather than image data, so no images
+are redistributed through it. And no attempt was made to identify, contact or
+link any depicted individual.
+
+Two dataset images do appear in the Chapter 5 screenshots, since a figure
+showing the tool working needs something in it. Both are credited beneath their
+figures, which the Flickr-Faces-HQ licence permits for non-commercial academic
+use. Images of children were excluded from the figures.
 
 **Licensing.** Dataset A's real images derive from NVIDIA's Flickr-Faces-HQ,
 licensed CC BY-NC-SA 4.0 and restricted to non-commercial use, which this
@@ -181,6 +194,11 @@ critical judgement rather than compliance.
 
 ## 3.6 Risk register
 
+Table 3.3 records the risks identified at the outset, what was done about each,
+and what actually happened.
+
+**Table 3.3: Risk register, with the outcome recorded after the fact**
+
 | Risk | Likelihood | Impact | Mitigation | Outcome |
 |---|---|---|---|---|
 | Dataset unavailable or withdrawn | Medium | High | Verify availability before committing; identify fallbacks | Both remained available |
@@ -191,11 +209,11 @@ critical judgement rather than compliance.
 | Insufficient memory for feature matrices | Medium | Medium | Calculate requirements in advance; subsample training set | 489MB peak, within limits |
 | Word count overrun | Medium | Low | Track per chapter during drafting | Tracked |
 
-Two rows are worth highlighting. The third, both datasets drawing real images
-from the same source, would have invalidated the entire cross-dataset argument,
-and it was cheap to test, so verification was performed before any CNN training
-rather than spending hours of compute on a foundation that might not hold. The
-fifth records a risk accepted rather than mitigated. A collapse to chance was
+The third row, both datasets drawing real images from the same source, would
+have invalidated the entire cross-dataset argument, and it was cheap to test.
+Verification was therefore performed before any CNN training, rather than
+spending hours of compute on a foundation that might not hold. The fifth row
+records a risk accepted rather than mitigated. A collapse to chance was
 considered likely from the outset, and the plan was always to report it rather
 than tune until it disappeared.
 

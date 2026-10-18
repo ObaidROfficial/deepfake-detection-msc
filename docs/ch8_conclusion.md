@@ -37,13 +37,12 @@ plus adversarial attack in two label regimes.
 **Objective 6, document the work.** This report. All six were met, with 2 and
 5 going beyond what was specified.
 
-## 8.2 Key findings
+## 8.2 Main findings
 
-**Improvements in in-domain accuracy did not transfer.** Across four models
-in-domain accuracy rose 21 points (73.6% → 94.6%) while cross-dataset accuracy
-never left the neighbourhood of chance, so the generalisation gap widened
-monotonically: 24.7, 30.7, 43.2, 44.2 points. Better representation learning
-was absorbed entirely by the source domain.
+**Improvements in in-domain accuracy did not transfer.** Across the four
+models the generalisation gap widened monotonically as in-domain accuracy
+improved (§6.3). Better representation learning was absorbed entirely by the
+source domain.
 
 **The failure is not architecture-specific.** MobileNetV2 and EfficientNet-B0
 are structurally different networks matched on trainable capacity to within
@@ -51,24 +50,27 @@ are structurally different networks matched on trainable capacity to within
 chance on unseen manipulations, so a single unlucky architecture choice does
 not explain it.
 
-**The failure is one of representation, not calibration.** Across every
-threshold in both polarities, the best achievable accuracy on the unseen
-dataset was 0.5453. No operating point recovers usable performance, so
-recalibration cannot fix this.
+**The failure is one of representation, not calibration.** No operating
+point in either polarity recovers usable performance on the unseen dataset
+(§6.3.1), so recalibration cannot fix it.
 
-**The discriminative signal is high-frequency, and this explains both
-failures.** Consistent with Frank et al. (2020), raising input resolution from
-128 to 224 pixels with all else constant was worth 10.1 accuracy points, and
-perturbations removing or masking high-frequency content cost up to 38.5 points
-against at most 3.8 for intensity rescaling of comparable perceptual magnitude.
-One mechanism accounts for the resolution effect, the robustness profile and
-the transfer failure, and generated predictions recorded before the experiments
-that tested them.
+**The detector is sensitive to high-frequency content, and the frequency
+properties that separate the classes are not stable across datasets.** Raising
+input resolution from 128 to 224 pixels with all else constant was worth 10.1
+accuracy points, and perturbations removing or masking high-frequency content
+cost up to 38.5 points against at most 3.8 for intensity rescaling of
+comparable perceptual magnitude. Both are consistent with Frank et al. (2020).
+A direct spectral comparison (§6.3.2) then qualified the account: the class
+difference in high-frequency power is negligible in the training dataset and
+clear but opposite in sign in the unseen one. One mechanism is consistent with
+the resolution effect, the robustness profile and the transfer failure, and it
+generated predictions recorded before the experiments that tested them, but
+the evidence does not establish it as the cause.
 
-**The detector fails in the dangerous direction.** When high-frequency evidence
-is unavailable, whether through domain shift or heavy compression, the model does not
-express uncertainty. It classifies almost everything as real, predicting "fake"
-for only 7.2% of a balanced unseen set.
+**The detector fails in the dangerous direction.** When the evidence it
+relies on is unavailable, whether through domain shift or heavy compression,
+the model does not express uncertainty. It classifies almost everything as
+real.
 
 **White-box adversarial robustness is effectively absent.** Accuracy falls from
 94.3% to 5.2% under an imperceptible FGSM perturbation, ranking inverted.
@@ -120,6 +122,14 @@ at this scale is directly testable and the pipeline already supports it.
 **Frequency-domain input representations.** Training on DCT or wavelet
 representations rather than pixels is a natural extension given where these
 results point.
+
+**Attribution, to find out what the network actually uses.** The spectral
+comparison in §6.3.2 showed that the classes barely separate in averaged
+high-frequency power in the training dataset, so the discriminating structure
+is finer than that measurement can represent. Gradient-based attribution, or a
+patch-based classifier with a restricted receptive field of the kind Chai et
+al. (2020) used, would narrow down what the network relies on. This is the gap
+behind the qualified answer to RQ2 in §7.1.
 
 **Adversarial training and stronger attacks.** FGSM is the weakest standard
 attack; iterative attacks such as PGD and realistic black-box transfer attacks

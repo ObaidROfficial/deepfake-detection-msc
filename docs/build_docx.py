@@ -23,6 +23,8 @@ from docx.shared import Pt, Inches, Mm, RGBColor
 DOCS = Path(sys.argv[1])
 FIGDIR = Path(sys.argv[2])
 OUT = Path(sys.argv[3])
+# Screenshots of the running artefact, kept apart from the generated plots.
+SHOTDIR = DOCS.parent / "screenshots"
 
 BODY_FONT = "Arial"
 
@@ -57,6 +59,9 @@ FIGURES = {
         ("fig_6_cnn_scores_efficientnet_b0.png", "Score distributions in-domain against cross-dataset, EfficientNet-B0"),
         ("fig_6_curves_mobilenet_v2.png", "ROC and precision-recall curves, MobileNetV2"),
         ("fig_6_curves_efficientnet_b0.png", "ROC and precision-recall curves, EfficientNet-B0"),
+        ("fig_6_26_spectral_profiles.png",
+         "Radially averaged power spectra by class. The classes separate in "
+         "Dataset B above 0.2 cycles per pixel and barely separate in Dataset A"),
     ],
     "6.5 Robustness results": [
         ("fig_5_07_jpeg_preview.png", "Visual effect of JPEG compression at the tested quality levels"),
@@ -73,6 +78,60 @@ for _sec in FIGURES:
         lst.append((fn, f"Figure 6.{_n}: {cap}"))
     FIGURES[_sec] = lst
 TOTAL_FIGURES = _n
+
+# Chapter 5 figures are screenshots of the artefact rather than plots, so they
+# live in screenshots/ instead of results/figures/ and are numbered separately.
+# Captions are deliberately short. Word builds the List of Figures from the
+# whole caption paragraph, so a sentence-long caption makes that list
+# unreadable. The explanation belongs in the body text.
+CH4_FIGURES = {
+    "4.4 Experimental design": [
+        ("fig_4_01_threshold_diagnostic.jpg",
+         "The both-polarity threshold diagnostic in evaluate.py"),
+    ],
+}
+
+CH5_FIGURES = {
+    "5.4 CNN implementation": [
+        ("fig_5_01_freeze_unfreeze.jpg",
+         "Model construction and the two-stage freeze/unfreeze in model.py"),
+    ],
+    "5.5 Demonstration tools": [
+        ("fig_5_02_app_real_verdict.jpg",
+         "The detector classifying a real photograph, with the out-of-range "
+         "note. Image from Flickr-Faces-HQ (NVIDIA, CC BY-NC-SA 4.0)"),
+        ("fig_5_03_app_fake_verdict.jpg",
+         "The same interface on a StyleGAN face, which raises no warning"),
+        ("fig_5_04_reliability_dialog.jpg",
+         "The reliability panel, reporting measured accuracy by condition"),
+        ("fig_5_05_out_of_range_checks.jpg",
+         "The out-of-range checks in predict.py that produce those warnings"),
+        ("fig_5_06_installer_options.jpg",
+         "The installer's options screen"),
+    ],
+    "5.6 Robustness implementation": [
+        ("fig_5_07_robustness_docstring.jpg",
+         "The prediction recorded in robustness.py before the suite was run"),
+        ("fig_5_08_fgsm_label_choice.jpg",
+         "fgsm_evaluate in robustness.py, showing the label-choice argument"),
+    ],
+}
+_m = 0
+for _sec in CH4_FIGURES:
+    lst = []
+    for fn, cap in CH4_FIGURES[_sec]:
+        _m += 1
+        lst.append((fn, f"Figure 4.{_m}: {cap}"))
+    CH4_FIGURES[_sec] = lst
+TOTAL_FIGURES += _m
+_m = 0
+for _sec in CH5_FIGURES:
+    lst = []
+    for fn, cap in CH5_FIGURES[_sec]:
+        _m += 1
+        lst.append((fn, f"Figure 5.{_m}: {cap}"))
+    CH5_FIGURES[_sec] = lst
+TOTAL_FIGURES += _m
 
 FILES = [
     ("ch1_introduction.md", "Chapter 1: Introduction"),
@@ -253,6 +312,8 @@ def render_markdown(doc, md: str, figures_by_section=None, drop_h1=True):
             for fn, cap in figures_by_section[current_section]:
                 path = FIGDIR / fn
                 if not path.exists():
+                    path = SHOTDIR / fn          # screenshots of the artefact
+                if not path.exists():
                     print(f"  MISSING FIGURE: {fn}")
                     continue
                 p = doc.add_paragraph()
@@ -335,9 +396,17 @@ def render_markdown(doc, md: str, figures_by_section=None, drop_h1=True):
             i += 1
         text = " ".join(buf)
 
-        nxt = lines[i].strip() if i < len(lines) else ""
+        # Look past blank lines for the table. Markdown puts a blank line
+        # between a caption and its table, and requiring the pipe on the very
+        # next line meant no caption was ever recognised: every one was written
+        # as body text, and the List of Tables field had nothing to collect.
+        j = i
+        while j < len(lines) and not lines[j].strip():
+            j += 1
+        nxt = lines[j].strip() if j < len(lines) else ""
         if re.fullmatch(r"\*\*Table [^*]+\*\*", text) and nxt.startswith("|"):
             pending_table_caption = text.strip("*")
+            i = j
             continue
         body_para(doc, text)
 
@@ -345,8 +414,149 @@ def render_markdown(doc, md: str, figures_by_section=None, drop_h1=True):
 
 
 # --- document ---------------------------------------------------------------
+# The Arden cover template sits beside the repository, in the project folder.
+COVER = DOCS.resolve().parent.parent / "Arden_Assessment_Cover_page (1).docx"
+
+# What goes in the seven cells of the Arden cover page, in order.
+COVER_FIELDS = [
+    "Arden University",
+    "MSc Cyber Security",
+    "COM7014 Advanced Computing Project",
+    "AI-Based Deepfake Detection Using Machine Learning with Robustness "
+    "Evaluation",
+    "STU1215887",
+    "Dr. Muhammad Saqib",
+    "{wordcount} (Chapters 1 to 8, excluding tables, references and appendices)",
+]
+
+
+def fill_cover(doc, wordcount: str) -> None:
+    """Write the seven answers into the cover page's table.
+
+    Each cell holds the printed label as an image in its FIRST paragraph and
+    an empty paragraph beneath it for the answer. The answer therefore goes in
+    paragraph 1: writing into paragraph 0 replaces the run that holds the
+    label image, which silently deletes the label.
+    """
+    if not doc.tables:
+        print("  WARNING: cover page has no table to fill")
+        return
+    for row, value in zip(doc.tables[0].rows, COVER_FIELDS):
+        cell = row.cells[0]
+        if len(cell.paragraphs) < 2:
+            cell.add_paragraph()
+        p = cell.paragraphs[1]
+        for r in list(p.runs):
+            r._element.getparent().remove(r._element)
+        pf = p.paragraph_format
+        pf.line_spacing_rule = WD_LINE_SPACING.SINGLE
+        pf.space_before = Pt(2)
+        pf.space_after = Pt(6)
+        pf.left_indent = Inches(0.1)
+        # The labels are floating images, so without a clearing break a short
+        # answer rides up alongside its label instead of sitting under it.
+        p.add_run().add_break(WD_BREAK.LINE_CLEAR_ALL)
+        run = p.add_run(value.format(wordcount=wordcount))
+        run.font.name = BODY_FONT
+        run.font.size = Pt(12)
+        run.bold = True
+
+        # The seven rows overflow onto a second page at the document's default
+        # spacing, so every paragraph in the cell is tightened: the label
+        # images keep their own height, and the trailing empty paragraphs are
+        # collapsed to nothing.
+        for other in cell.paragraphs:
+            if other is p:
+                continue
+            pf2 = other.paragraph_format
+            pf2.space_before = Pt(0)
+            pf2.space_after = Pt(0)
+            pf2.line_spacing_rule = WD_LINE_SPACING.SINGLE
+            if not other.runs and not other._p.findall(".//" + qn("w:drawing")):
+                other.add_run().font.size = Pt(2)
+
+
+def brand_header(section, logo_path) -> None:
+    """Put a small Arden mark in a section's own header.
+
+    The cover template's logo is about 30mm tall and sits behind the text, so
+    carrying that header into the report overlaps the first two lines of every
+    page. A smaller inline copy keeps the branding on every page without
+    running into the body.
+    """
+    section.header.is_linked_to_previous = False
+    p = section.header.paragraphs[0]
+    p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    p.paragraph_format.space_after = Pt(0)
+    p.add_run().add_picture(str(logo_path), height=Mm(13))
+
+
+def extract_cover_logo():
+    """Pull the Arden mark out of the cover template's header, once."""
+    import zipfile, tempfile
+    if not COVER.exists():
+        return None
+    with zipfile.ZipFile(COVER) as z:
+        names = [n for n in z.namelist() if n.startswith("word/media/")]
+        if not names:
+            return None
+        # The header image is the only photograph among the label graphics.
+        pick = max(names, key=lambda n: z.getinfo(n).file_size
+                   if n.lower().endswith((".jpeg", ".jpg")) else -1)
+        out = Path(tempfile.gettempdir()) / ("arden_mark" + Path(pick).suffix)
+        out.write_bytes(z.read(pick))
+        return out
+
+
+def import_default_styles(doc) -> int:
+    """Copy any style the blank python-docx template has and this one lacks.
+
+    The Arden cover page was saved with a cut-down style set: it has no
+    Heading, Caption or list styles at all, because the page never uses them.
+    Building the report on top of it therefore fails until the usual
+    definitions are put back.
+    """
+    from copy import deepcopy
+    blank = Document()
+    dst = doc.styles.element
+    have = {s.get(qn("w:styleId")) for s in dst.findall(qn("w:style"))}
+    added = 0
+    for s in blank.styles.element.findall(qn("w:style")):
+        sid = s.get(qn("w:styleId"))
+        if sid in have:
+            continue
+        dst.append(deepcopy(s))
+        added += 1
+    return added
+
+
+def front_heading(doc, text):
+    """A chapter-sized heading that Word's TOC will not collect.
+
+    Used only for the Table of Contents heading itself, which should not be
+    an entry in its own contents list.
+    """
+    name = "FrontHeading"
+    if name not in [s.name for s in doc.styles]:
+        s = doc.styles.add_style(name, 1)
+        s.base_style = doc.styles["Heading 1"]
+        pPr = s.element.get_or_add_pPr()
+        lvl = OxmlElement("w:outlineLvl")
+        lvl.set(qn("w:val"), "9")          # body text: excluded from \o
+        pPr.append(lvl)
+    p = doc.add_paragraph(style=name)
+    r = p.add_run(text)
+    r.font.name = BODY_FONT
+    return p
+
+
 def main():
-    doc = Document()
+    doc = Document(str(COVER)) if COVER.exists() else Document()
+    if not COVER.exists():
+        print(f"  WARNING: cover page not found at {COVER}")
+    else:
+        n = import_default_styles(doc)
+        print(f"cover page loaded; {n} missing styles imported")
 
     st = doc.styles["Normal"]
     st.font.name = BODY_FONT
@@ -355,64 +565,50 @@ def main():
     st.paragraph_format.line_spacing_rule = WD_LINE_SPACING.DOUBLE
     st.paragraph_format.space_after = Pt(10)
 
-    for name, base in (("FigureCaption", "Caption"), ("TableCaption", "Caption")):
+    # The Arden cover template carries a cut-down style set, so a base style
+    # that exists in a blank python-docx document may be missing here.
+    have = {s.name for s in doc.styles}
+    for name in ("FigureCaption", "TableCaption"):
         s = doc.styles.add_style(name, 1)
-        s.base_style = doc.styles[base]
+        if "Caption" in have:
+            s.base_style = doc.styles["Caption"]
         s.font.name = BODY_FONT
         s.font.size = Pt(10)
         s.font.italic = True
         s.font.color.rgb = RGBColor(0, 0, 0)
+        s.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
+        s.paragraph_format.space_after = Pt(12)
+        s.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    # A4, not python-docx's US Letter default: this is a UK submission.
+    # A4, matching the Arden cover template exactly. The branding image in the
+    # header is positioned against these margins, so changing them for the body
+    # would shift the logo between the cover and the rest of the report.
     def page_setup(s):
         s.page_width = Mm(210)
         s.page_height = Mm(297)
-        s.top_margin = s.bottom_margin = Inches(1)
-        s.left_margin = Inches(1.25)   # extra for binding
-        s.right_margin = Inches(1)
+        # Room for the branding mark in the header, which sits 16mm from the
+        # page edge and is 13mm tall.
+        s.top_margin = Mm(33)
+        s.bottom_margin = Mm(25.4)
+        s.left_margin = s.right_margin = Mm(25.4)
+        s.header_distance = Mm(16)
+        s.footer_distance = Mm(11)
 
-    sec = doc.sections[0]
+    # ---------- cover page ----------
+    # Section 0 is the Arden cover template, left exactly as supplied: its own
+    # margins, its header image, and no page number. The table is filled in at
+    # the end of this function, once the word count is known.
+
+    # ---------- front matter: new section, roman from i ----------
+    sec = doc.add_section(WD_SECTION.NEW_PAGE)
     page_setup(sec)
-
-    # ---------- title page (no page number) ----------
-    for _ in range(4):
-        doc.add_paragraph()
-    for text, size, bold in [
-        ("AI-Based Deepfake Detection Using Machine Learning", 20, True),
-        ("with Robustness Evaluation", 20, True),
-        ("", 12, False),
-        ("", 12, False),
-        ("Muhammad Obaid Ur Rehman", 14, False),
-        ("STU1215887", 12, False),
-        ("", 12, False),
-        ("MSc Advanced Computing Project (COM7014)", 13, False),
-        ("MSc Cyber Security", 13, False),
-        ("Berlin School of Computing, Arden University", 13, False),
-        ("", 12, False),
-        ("Supervisor: Dr. Muhammad Saqib", 12, False),
-        ("Second marker: Mr. Sharmarke Gabayre", 12, False),
-        ("", 12, False),
-        ("Submitted October 2026", 12, False),
-    ]:
-        p = doc.add_paragraph()
-        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
-        p.paragraph_format.space_after = Pt(10)
-        r = p.add_run(text)
-        r.bold = bold
-        r.font.name = BODY_FONT
-        r.font.size = Pt(size)
-    doc.add_paragraph()
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
-    r = p.add_run("Submitted in partial fulfilment of the requirements for the "
-                  "degree of MSc Computing (Advanced Computing)")
-    r.italic = True
-    r.font.name = BODY_FONT
-    r.font.size = Pt(11)
-
     sec.different_first_page_header_footer = False
+    # Own header carrying a smaller Arden mark, and own footer so the page
+    # number does not also appear on the cover.
+    logo = extract_cover_logo()
+    if logo:
+        brand_header(sec, logo)
+    sec.footer.is_linked_to_previous = False
     page_numbering(sec, "lowerRoman", 1)
     footer_page_number(sec)
 
@@ -424,7 +620,6 @@ def main():
         return text[a:b]
 
     # ---------- abstract ----------
-    doc.add_page_break()
     heading(doc, "Abstract", 1)
     abstract = slice_between(fm, "## Abstract", "## Acknowledgements")
     abstract = re.sub(r"^##.*$", "", abstract, flags=re.M)
@@ -440,7 +635,7 @@ def main():
 
     # ---------- contents ----------
     doc.add_page_break()
-    heading(doc, "Table of Contents", 1)
+    front_heading(doc, "Table of Contents")
     p = doc.add_paragraph()
     p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
     field(p, r'TOC \o "1-3" \h \z \u')
@@ -480,7 +675,9 @@ def main():
             doc.add_page_break()
         heading(doc, title, 1)
         md = DOCS.joinpath(fname).read_text(encoding="utf-8")
-        figs = FIGURES if fname == "ch6_results.md" else None
+        figs = {"ch6_results.md": FIGURES,
+                "ch5_implementation.md": CH5_FIGURES,
+                "ch4_design.md": CH4_FIGURES}.get(fname)
         render_markdown(doc, md, figures_by_section=figs)
 
     # ---------- references ----------
@@ -510,9 +707,30 @@ def main():
             doc.add_page_break()
         render_markdown(doc, chunk, drop_h1=False)
 
+    # ---------- cover page word count ----------
+    # Counted the way the limit is meant: Chapters 1 to 8 only, headings in,
+    # tables, captions, references and appendices out.
+    counting, done, words = False, False, 0
+    for p in doc.paragraphs:
+        text, style = p.text.strip(), (p.style.name or "")
+        if not counting:
+            if style.startswith("Heading 1") and text.lower().startswith("chapter 1"):
+                counting = True
+            else:
+                continue
+        if style.startswith("Heading 1") and (
+                text.lower().startswith("reference") or
+                text.lower().startswith("appendi")):
+            done = True
+        if done or "aption" in style:
+            continue
+        words += len(text.split())
+    fill_cover(doc, f"{words:,} words")
+
     doc.save(OUT)
     print(f"saved {OUT}  ({OUT.stat().st_size/1e6:.2f} MB)")
     print(f"figures placed: {TOTAL_FIGURES}")
+    print(f"main body word count on cover: {words:,}")
 
 
 if __name__ == "__main__":

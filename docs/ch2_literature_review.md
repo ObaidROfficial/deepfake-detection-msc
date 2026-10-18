@@ -27,7 +27,7 @@ and Aila, 2019) they could synthesise entire faces at 1024×1024 that most
 people cannot identify as artificial. These are *fully synthetic*: no real
 person is depicted. StyleGAN produced the fake half of this project's training
 data. One architectural detail matters later. Like all current GAN
-architectures it builds an image by progressively **upsampling** from a
+architectures it builds an image by progressively upsampling from a
 low-resolution representation, and section 2.4 identifies that upsampling as
 the origin of the artefacts detectors exploit.
 
@@ -38,24 +38,22 @@ misuse. More recently diffusion models have begun displacing GANs for
 synthesis, which matters here because both datasets used are GAN-era. Chapter 7
 takes that limitation up.
 
-The distinction between full synthesis and localised face swapping turns out to
-be central: a detector trained on one is not obviously being trained for the
-other, even though both are labelled "fake".
+The distinction matters: a detector trained on full synthesis is not obviously
+being trained for face swapping, even though both are labelled "fake".
 
 ## 2.3 Detection approaches
 
-### Handcrafted features
+### 2.3.1 Handcrafted features
 
 Early work used handcrafted features, looking for inconsistencies a generator
-was likely to get wrong, such as irregular blinking, inconsistent head pose,
-mismatched lighting and blending boundaries around a swapped face. These are
-interpretable, but each targets a specific flaw and degrades once generators
-address it. The classical descriptors used as a baseline here, Histogram of
-Oriented Gradients and Local Binary Patterns, belong to this tradition, though
-applied as general texture and gradient descriptors rather than as detectors of
-any specific artefact.
+was likely to get wrong: irregular blinking, inconsistent head pose, mismatched
+lighting, blending boundaries. These are interpretable, but each targets a
+specific flaw and degrades once generators address it. The classical
+descriptors used as a baseline here belong to this tradition, though applied as
+general texture and gradient descriptors rather than as detectors of any
+specific artefact.
 
-### Convolutional neural networks
+### 2.3.2 Convolutional neural networks
 
 The field then moved almost entirely to convolutional neural networks, trained
 end to end on labelled images so they learn their own features. Architectures
@@ -76,7 +74,7 @@ classifiers, and the assumption underlying their use is rarely examined
 explicitly: that features learned for object recognition transfer usefully to
 detecting generator artefacts. Chapter 6 bears on it.
 
-### Transformers
+### 2.3.3 Transformers
 
 Transformer architectures have also been applied, with some evidence they
 generalise across datasets better than CNNs. Comparative figures are avoided
@@ -86,7 +84,7 @@ Chapter 6 may be partly architectural rather than intrinsic to the task.
 Transformers were not used because of the CPU-only constraint, attention over
 image patches being far more expensive than depthwise convolution.
 
-### Frequency-domain approaches
+### 2.3.4 Frequency-domain approaches
 
 A third strand works in the frequency domain rather than on pixels directly,
 treated separately in section 2.4 because it supplies the mechanism explaining
@@ -99,19 +97,18 @@ frequency-domain analysis of GAN-generated images, finding severe and easily
 identified artefacts in frequency space that are consistent across network
 architectures, datasets and resolutions.
 
-The important part is the explanation rather than the observation. They
-demonstrate that the artefacts are caused by the **upsampling operations**
-present in all current GAN architectures, and describe this as structural to
-how GANs produce images rather than an incidental flaw of one model.
+They also explain where the artefacts come from, which is what makes the paper
+useful here. They trace them to the upsampling operations present in all
+current GAN architectures, and describe this as structural to how GANs produce
+images rather than an incidental flaw of one model.
 
 This matters a great deal here. If the discriminative signal sits in the
-high-frequency band, two consequences follow. Anything reducing image
-resolution should reduce accuracy, because it discards the band carrying the
-evidence. And any processing that removes high-frequency detail, such as
-compression, blurring or downscaling, should damage a detector far more than
-processing that leaves fine structure intact. Both were tested here and both
-confirmed (Chapters 6 and 7). Frank et al. therefore supplies the theoretical
-grounding for results I first observed empirically without expecting them.
+high-frequency band, then reducing resolution should reduce accuracy, and any
+processing that removes fine detail, such as compression, blurring or
+downscaling, should damage a detector far more than processing that leaves it
+intact. Both were tested here and both confirmed (Chapters 6 and 7). Frank et
+al. therefore supplies the grounding for results I first observed empirically
+without expecting them.
 
 A related line of work treats these artefacts as generator "fingerprints",
 specific enough to attribute an image to the model that produced it. The
@@ -125,38 +122,32 @@ Several datasets have become standard in this field.
 **FaceForensics++** (Rössler et al., 2019) is the most widely used benchmark,
 providing sequences manipulated by four techniques at several compression
 levels, and access requires a signed agreement with the hosting institution.
-This project would have benefited from it specifically because it varies
-manipulation *method* and compression *level* independently. That is the
-two-factor design Chapters 6 and 7 approximate using two datasets plus a
+It varies manipulation *method* and compression *level* independently, which is
+the two-factor design Chapters 6 and 7 approximate using two datasets plus a
 synthetic degradation suite. Chapter 3 explains why it could not be used.
 
 **The Deepfake Detection Challenge dataset** (Dolhansky et al., 2020) contains
-over 100,000 clips from 3,426 paid actors. Being a video corpus of several
-hundred gigabytes places it outside this project's scope twice over. One detail
-is worth noting regardless: all subjects consented to having their likenesses
-modified, unlike datasets assembled from scraped web imagery, a point Chapter
-3's ethical discussion returns to.
+over 100,000 clips from 3,426 paid actors, and at several hundred gigabytes of
+video it is outside this project's scope twice over. All subjects consented to
+having their likenesses modified, unlike datasets assembled from scraped web
+imagery, which Chapter 3's ethical discussion returns to.
 
-**Celeb-DF** (Li et al., 2020) contains 5,639 high-quality celebrity forgeries
-from an improved synthesis process. Its motivating argument is directly
-relevant: the authors contend existing datasets are of low visual quality and
-do not resemble deepfakes actually circulating, making benchmarks
-unrealistically easy. That criticises benchmark validity rather than any
-detector, reinforcing the case that in-domain accuracy is a weak proxy for
-deployed performance.
+**Celeb-DF** (Li et al., 2020) contains 5,639 high-quality celebrity forgeries.
+Its motivating argument matters more here than the dataset does: the authors
+contend existing datasets are of low visual quality and do not resemble
+deepfakes actually circulating, making benchmarks unrealistically easy. That
+criticises benchmark validity rather than any detector.
 
-**OpenForensics** (Le et al., 2021) targets multi-face forgery detection and
-segmentation "in-the-wild", localising manipulated faces among several people
-in unrestricted scenes, which the authors argue is substantially harder than
+**OpenForensics** (Le et al., 2021) targets multi-face forgery detection
+"in-the-wild", localising manipulated faces among several people in
+unrestricted scenes, which the authors argue is substantially harder than
 conventional deepfake recognition. It provides the cross-dataset evaluation set
 here.
 
-The **Flickr-Faces-HQ (FFHQ)** dataset (Karras, Laine and Aila, 2019) is not a
-deepfake dataset but supplies the real images for the training set, and is what
-StyleGAN was trained on. Two properties matter here. Its images are
-**landmark-aligned**, which this project exploited when verifying the two
-datasets do not share a real-image source (Chapter 5). And its improved
-demographic variation is relative rather than absolute, since it provides no
+The **Flickr-Faces-HQ (FFHQ)** dataset (Karras, Laine and Aila, 2019) supplies
+the real images for the training set and is what StyleGAN was trained on. Its
+images are landmark-aligned, which this project exploited when verifying the
+two datasets do not share a real-image source (Chapter 5), and it provides no
 demographic labels, which is why the audit discussed in Chapter 7 could not be
 performed.
 
@@ -173,7 +164,7 @@ sharply on manipulations produced by a method they were not trained on. Since a
 real-world detector will inevitably meet techniques that did not exist when it
 was trained, in-domain accuracy alone is a poor indicator of practical value.
 
-Yan et al. (2023) attempt to quantify this with **DeepfakeBench**, integrating
+Yan et al. (2023) attempt to quantify this with DeepfakeBench, integrating
 15 detection methods and 9 datasets behind standardised protocols. They argue
 the absence of such a benchmark produces *"unfair performance comparisons and
 potentially misleading results"*, because data pipelines, settings and metrics
@@ -234,18 +225,15 @@ Abdullah et al. (2024) extend both threats. Examining eight state-of-the-art
 detectors, they argue these are "far from being ready for deployment" for two
 reasons. Lightweight customisation of large generative models lets an attacker
 produce many bespoke generators, against which existing defences generalise
-poorly. And vision foundation models can craft adversarial deepfakes **without
-adding any adversarial noise at all**, manipulating image content semantically.
+poorly. And vision foundation models can craft adversarial deepfakes without
+adding any adversarial noise at all, manipulating image content semantically.
 
 The first reinforces the case for cross-dataset evaluation: if the number of
 generators in circulation is growing rapidly, in-domain accuracy becomes an
 ever weaker proxy for deployed performance. The second limits this project's
-adversarial testing. FGSM perturbs pixels within a small norm budget, so a
-semantic attack would be captured by no measure used here, nor addressed by the
-adversarial training proposed in Chapter 8. These results are a lower bound on
-vulnerability rather than a characterisation of it. A further qualification,
-met in this project's own results, is that adversarial evaluation is easy to
-get wrong in ways that inflate apparent attack strength, as Chapter 7 describes.
+adversarial testing, since FGSM perturbs pixels within a small norm budget and
+a semantic attack would be captured by no measure used here. These results are
+a lower bound on vulnerability rather than a characterisation of it.
 
 ## 2.8 Research gap and contribution
 
@@ -264,6 +252,6 @@ This project addresses the first two directly, evaluating four models under a
 single protocol and applying a threshold diagnostic that separates calibration
 failure from representation failure. It then applies a degradation suite and a
 white-box adversarial attack to the same model and tests whether one mechanism
-accounts for both. The contribution is therefore not a new architecture but a
-structured examination of *how* and *why* a conventional detector fails outside
-its training distribution, under documented resource constraints.
+accounts for both. What it contributes is a structured examination of *how* and
+*why* a conventional detector fails outside its training distribution, under
+documented resource constraints.

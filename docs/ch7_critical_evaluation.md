@@ -11,76 +11,78 @@
 
 **RQ1: How effective are machine learning models in detecting deepfake media?**
 
-Within the distribution they are trained on, very effective: MobileNetV2
-reached 94.3% at an AUC of 0.987, and even logistic regression on 32×32
-greyscale pixels reached 73.6%. Outside it, ineffective, since all four fell to
-approximately chance on an unseen manipulation method. The answer therefore
-depends entirely on whether the question means "on the test set" or "in
-deployment", and for the best model those two readings differ by 44.2 accuracy
-points.
+Within the distribution they are trained on, very effective, and even a
+logistic regression on 32×32 greyscale pixels is well above chance. Outside it,
+ineffective: all four models fell to approximately chance on an unseen
+manipulation method (§6.3). The answer therefore depends entirely on whether
+the question means "on the test set" or "in deployment", and for the best model
+those two readings differ by 44.2 accuracy points.
 
 **RQ2: Which features or patterns are most useful in distinguishing real and
 fake media?**
 
-High-frequency detail, on three converging lines of evidence: raising
-resolution from 128 to 224 pixels was worth ten accuracy points; perturbations
-removing high-frequency content cost up to 38.5 points against at most 3.8 for
-intensity rescaling; and sharpness was the strongest single low-level
-discriminator in the exploratory analysis (AUC 0.611, against 0.547 and 0.553
-for brightness and contrast). This aligns with Frank et al. (2020), who traced
-GAN frequency artefacts to generator upsampling. The useful features appear to
-be generator fingerprints rather than semantic indicators of manipulation.
+This question is the one the evidence here answers least directly, and the
+answer has to be stated carefully. What the experiments establish is that the detector is *sensitive* to
+high-frequency content: the resolution ablation, the gap between destructive
+and rescaling perturbations (§6.5), and sharpness being the strongest single
+low-level discriminator in the exploratory analysis all point the same way.
+Sensitivity is not the same as knowing which features were learned, and nothing
+here opens the network up to look.
+
+The spectral comparison in §6.3.2 sharpens that distinction. In the training
+dataset the averaged power spectra of the two classes almost coincide, so
+whatever the model exploits to reach 94.3% is not a global difference in
+high-frequency energy; it must be finer than a radial average can represent.
+In the unseen dataset a clear high-frequency difference does exist and runs in
+the opposite direction. The defensible claim is therefore about transfer rather
+than about representation: the frequency properties that distinguish the
+classes are not stable across the two datasets, which is consistent with
+detectors keyed to generator-specific artefacts rather than to semantic
+indicators of manipulation. Establishing what the network actually uses would
+need an attribution method, which §8.5 lists as further work.
 
 **RQ3: How does the performance of the proposed model compare to baseline
 approaches?**
 
-In-domain, substantially better: 94.3% and 94.6% for the two CNNs against 78.6%
-for HOG+LBP and 73.6% for logistic regression. Cross-dataset, no better in any
-practical sense. All four sit within three points of chance and no threshold in
-either polarity recovers usable accuracy. The CNNs' AUCs of 0.5593 and 0.5285
-are statistically above chance, but best achievable accuracies of 54.5% and
-52.2% are not usable detectors. At matched capacity, EfficientNet-B0 gained 0.3
-accuracy points in-domain for 85% more training time; architectural
-sophistication bought very little here.
+In-domain, substantially better: roughly sixteen accuracy points separate the
+two CNNs from the stronger classical baseline. Cross-dataset, no better in any
+practical sense. The CNNs' AUCs are statistically above chance, but their best
+achievable accuracies are not usable detectors. At matched capacity,
+EfficientNet-B0 gained 0.3 accuracy points in-domain for 85% more training
+time, so architectural sophistication bought very little here.
 
 **RQ4: How robust is the detection model against manipulated or adversarial
 inputs?**
 
 Moderately robust to mild degradation, fragile to severe degradation, and
 almost completely defenceless against white-box adversarial attack. It holds up
-at JPEG quality 50 and above (≥ 0.895) but falls to 0.558 when downscaled to
-thumbnail size. Under FGSM at an imperceptible ε of 0.005, accuracy collapses
-from 0.943 to 0.052 and the ranking inverts.
+through the compression a social platform would apply but roughly halves on a
+thumbnail, and under FGSM at an imperceptible perturbation the ranking inverts
+(§6.5, §6.6).
 
 **RQ5: What are the key limitations of current deepfake detection techniques?**
 
 The limitation documented most clearly here is that in-domain accuracy and
-cross-domain reliability are not merely different but appear to be in tension.
-Across four models the generalisation gap widened monotonically as in-domain
-accuracy improved: 24.7, 30.7, 43.2, 44.2 points. If detectors succeed by
-exploiting generator-specific artefacts, a better detector is partly one
-exploiting them more thoroughly, which offers no protection against a generator
-it has not seen.
+cross-domain reliability appear to be in tension: across four models the
+generalisation gap widened monotonically as in-domain accuracy improved. If
+detectors succeed by exploiting generator-specific artefacts, a better detector
+is partly one exploiting them more thoroughly, which offers no protection
+against a generator it has not seen.
 
 ## 7.2 Strengths of the artefact
 
 The experimental design supports the conclusions drawn from it. Splits are
-seeded and verified disjoint by assertion, manifests are committed so the exact
-subsets can be reconstructed, all hyperparameters live in one configuration
-file, and every result in Chapter 6 can be regenerated from a clean clone.
-
-Dataset independence was verified rather than assumed, before any compute was
-committed. Perceptual hashing found zero overlap across 1,400 sampled real
-images, and Dataset A's mean image retains 1.6 times the edge structure of
-Dataset B's.
+seeded and verified disjoint by assertion, manifests are committed, all
+hyperparameters live in one configuration file, and every result in Chapter 6
+can be regenerated from a clean clone. Dataset independence was verified rather
+than assumed before any compute was committed (§5.2.1).
 
 The threshold diagnostic separating calibration failure from representation
 failure adds something beyond reporting accuracy: two models can both score 49%
 for entirely different reasons, and which one applies changes what conclusion
-is available. Several predictions were also recorded before the experiments
-that tested them. The robustness prediction was written into the module
-docstring before the suite ran, which makes those genuine tests rather than
-post-hoc rationalisation.
+is available. The robustness prediction also went into the module docstring
+before the suite ran (Figure 5.5), so it was a test rather than a post-hoc
+rationalisation.
 
 The artefact is also usable by somebody who did not build it: a graphical
 installer handles the environment, dependencies and weights, and the interface
@@ -210,10 +212,10 @@ unwarranted confidence.
 
 **Sustainability.** Total compute across all experiments was approximately
 eight hours on a CPU-only consumer laptop, negligible against the resources
-used to train the generators these models detect. The asymmetry is worth
-noting: generation is far more compute-intensive than detection and also far
-better funded, so the environmental cost of the arms race falls
-disproportionately on the generation side.
+used to train the generators these models detect. Generation is far more
+compute-intensive than detection and also far better funded, so the
+environmental cost of the arms race falls disproportionately on the generation
+side.
 
 **Global context.** Detection performance is bounded by training data, and face
 datasets have well-documented demographic imbalances. Neither dataset here

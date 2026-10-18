@@ -12,8 +12,9 @@ The complete source is at
 result requires only the repository and the weights attached to the release;
 the datasets are downloaded by script. Full listings are not reproduced here,
 since printed code is nearly unreadable and immediately goes stale against the
-repository. This appendix records what each module does and where the claims in
-Chapter 5 can be checked.
+repository. One short excerpt does appear as Figure 5.5, because it is evidence
+for a claim rather than a listing. This appendix records what each module does
+and where the claims in Chapter 5 can be checked.
 
 ## A.1 Module inventory
 
@@ -280,7 +281,7 @@ honestly than dates spread across five months would.
 An extension was agreed with the supervisor on 18 June 2026, moving it to 21
 October 2026. Work started on the original schedule in May and continued across
 the extended period rather than restarting within it. Two things follow from
-that which are worth stating plainly. The extension is the reason the artefact
+that. The extension is the reason the artefact
 grew a demonstration interface, an installer and a second trained model, none
 of which were in the approved scope; and it is also the reason the report
 discusses defects found in week 7 that a June submission would simply have

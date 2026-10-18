@@ -61,11 +61,15 @@ structurally dissimilar yet fail identically, the result is not attributable to
 a single architecture choice.
 
 A controlled ablation found input resolution alone worth 10.1 accuracy points,
-supporting the account that the discriminative signal lies in high-frequency
-detail arising from generator upsampling. That account generated a prediction,
-recorded before testing, which the robustness suite confirmed: perturbations
-destroying high-frequency information cost up to 38.5 accuracy points against
-at most 3.8 for intensity rescaling. Under white-box adversarial attack at an
+which is consistent with the account that the discriminative signal lies in
+high-frequency detail arising from generator upsampling. That account generated
+a prediction, recorded before testing, which the robustness results support:
+perturbations destroying high-frequency information cost up to 38.5 accuracy
+points against at most 3.8 for intensity rescaling. A direct spectral
+comparison of the datasets qualifies the account rather than confirming it. The
+class difference in high-frequency power is negligible in the training dataset
+and clear but reversed in sign in the unseen one, so the evidence bears more on
+why transfer fails than on what the network learned. Under white-box adversarial attack at an
 imperceptible perturbation, accuracy fell to 5.2%.
 
 The detector fails toward classifying images as authentic rather than toward

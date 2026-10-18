@@ -89,3 +89,9 @@ logs/
 runs/
 *.log
 checkpoints/
+
+# ---- Report screenshots ----
+# Interface screenshots used as figures in the report. Two of them contain a
+# dataset face, and this project does not redistribute dataset content through
+# the repository (see docs Appendix D). They live in the .docx instead.
+screenshots/

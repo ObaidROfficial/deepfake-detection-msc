@@ -22,15 +22,15 @@ cores, since benchmarking showed diminishing returns beyond that.
 Datasets were downloaded through the Kaggle API: 3.75GB for Dataset A and
 1.68GB for Dataset B, about 46 minutes combined. Inspection scanned 140,000
 images in Dataset A and 190,335 in Dataset B, labelling every one from its
-folder path. Dataset A is exactly balanced at 70,000 per class, Dataset B
-near-balanced at 95,201 real against 95,134 fake, with no duplicate paths
-within either and no overlap between them. Both are uniformly 256×256 JPEG.
+folder path. Dataset A is exactly balanced at 70,000 per class and Dataset B
+near-balanced at 95,201 real against 95,134 fake, with no duplicates within
+either and no overlap between them. Both are 256×256 JPEG.
 
 Subsets were drawn from Dataset A's official folders, being 20,000 training,
 4,000 validation and 4,000 test, plus 6,000 from Dataset B for cross-dataset
 evaluation. The disjointness assertion passed.
 
-### Verifying dataset independence
+### 5.2.1 Verifying dataset independence
 
 Before committing compute to training, I tested whether the two datasets shared
 a real-image source, since if Dataset B's real images also came from FFHQ the
@@ -51,9 +51,9 @@ regardless. That caveat is carried into Chapter 7.
 
 Both baselines share a feature-extraction and caching layer, since extraction
 over 20,000 images takes minutes and is repeated whenever a model is retuned.
-The cache key includes input resolution, which prevented a real error later: on
-raising the CNN's resolution from 128 to 224 pixels, a resolution-agnostic
-cache would have silently reused 128px features.
+The cache key includes input resolution, which prevented a real error: on
+raising the CNN's resolution from 128 to 224, a resolution-agnostic cache would
+have silently reused 128px features.
 
 Exact descriptor settings are tabulated in Appendix A.4. One implementation
 detail is worth surfacing. `LinearSVC` gives no probability estimates, so
@@ -73,8 +73,8 @@ low-level forensic artefacts the model depends on. The dataset class returns a
 black image rather than raising on a corrupt file, because a single unreadable
 file should not terminate a three-hour run.
 
-The freeze/unfreeze logic freezes the entire backbone, then in stage two
-releases the trailing *n* blocks. Writing this as "freeze everything, then
+The freeze/unfreeze logic, shown in Figure 5.1, freezes the entire backbone,
+then in stage two releases the trailing *n* blocks. Writing this as "freeze everything, then
 selectively unfreeze" proved less error-prone than the first version, which set
 flags twice. Checkpointing writes every epoch, keeping best-by-validation
 weights separate from the most recent, and the resume path reconstructs the
@@ -84,19 +84,19 @@ optimiser at the correct stage.
 
 Two entry points let the trained model be used rather than only measured.
 `app.py` is a desktop window showing the classified region, the verdict, both
-class probabilities and any out-of-range warnings. `src/predict.py` is a
-command line tool taking an image or a folder, used for batches during
-development. The window imports its inference logic from `predict.py` rather
-than reimplementing it, so a preprocessing difference cannot arise silently.
+class probabilities and any out-of-range warnings, as in Figure 5.2.
+`src/predict.py` is a command line tool taking an image or a folder, used for
+batches during development. The window imports its inference logic from
+`predict.py` rather than reimplementing it, so a preprocessing difference
+cannot arise silently.
 
 The window was originally built with Gradio, which serves a local web page and
-opens a browser tab. That worked, but it meant importing a web framework and an
-ASGI server to display one image and one number, and ten to twenty seconds
-passed before anything appeared on screen. That was long enough that the
-launcher had to be given a visible console so the wait did not look like a
-crash. Rebuilding it in tkinter, already in the standard library and already
-used by the installer, cut startup to two or three seconds and dropped a web
-stack the install never used as a web application.
+opens a browser tab. That meant importing a web framework and an ASGI server to
+display one image and one number, and ten to twenty seconds passed before
+anything appeared, long enough that the launcher needed a visible console so
+the wait did not look like a crash. Rebuilding it in tkinter, already in the
+standard library and already used by the installer, cut startup to two or three
+seconds and dropped a web stack the install never used as a web application.
 
 A second argument, raised in supervision, mattered more than the engineering
 one. A browser interface asks the user to accept that a program they just
@@ -109,12 +109,25 @@ interface becomes platform-specific, which is most of what follows.
 
 Both entry points apply face detection before classification, warn when an
 input falls outside the validated conditions by citing the *measured* accuracy
-for that condition rather than a generic caution, and carry a standing notice
-that diffusion-generated images are out of scope. That follows from the
-argument in Chapter 8 that a detector silently failing while appearing to work
-is worse than none.
+for that condition, and carry a standing notice that diffusion-generated images
+are out of scope. That follows from the argument in Chapter 8 that a detector
+silently failing while appearing to work is worse than none.
 
-### Packaging for a non-technical user
+Figures 5.2 and 5.3 show the difference the input makes. The photograph
+triggers the out-of-range note, because the face had to be cropped out of a
+larger frame first, whereas the StyleGAN face is already the size and framing
+the model was trained on and produces no warning. Figure 5.4 is the reliability
+panel, which reports the measured accuracy for every condition tested in
+Chapter 6 and states plainly that a REAL verdict is not evidence an image is
+authentic. Requirement F11 is met there rather than in this report, which the
+user will never read.
+
+Figure 5.5 is the code behind those warnings. Each message quotes the accuracy
+measured for that condition in Chapter 6, so the interface cannot drift away
+from the evaluation: changing what the detector claims about itself means
+changing a number that appears in the results.
+
+### 5.5.1 Packaging for a non-technical user
 
 Shell scripts (`setup.ps1`, `setup.sh`) install everything in one command, but
 still assume the user is comfortable at a terminal and already has Python.
@@ -126,10 +139,10 @@ The awkward part is a circular dependency that is not obvious until you hit it.
 PyInstaller bundles a Python runtime, so the installer launches on a machine
 with nothing installed. But that runtime is frozen inside the executable and
 can neither create a virtual environment nor run pip, so a real interpreter is
-still needed. Bundling Python's official embeddable distribution fails too,
-because it deliberately omits tkinter and pip. The resolution was to have the
-installer fetch the official python.org installer and run it, checking the
-download against the published checksum first.
+still needed, and Python's official embeddable distribution omits tkinter and
+pip. The resolution was to have the installer fetch the official python.org
+installer and run it, checking the download against the published checksum
+first.
 
 It installs 3.11.9, matching the development environment, and *refuses*
 anything above 3.13. That upper bound is not caution for its own sake. This
@@ -141,6 +154,12 @@ nothing about. Neither executable is code-signed, so SmartScreen and Gatekeeper
 warn on first run, and the README documents this rather than leaving it a
 surprise.
 
+Three decisions are visible in the options screen, Figure 5.6. The download
+size is stated before the user commits to anything, the default location is
+per-user so no administrator rights are needed, and the second model is
+optional, since most users want a verdict rather than a comparison between two
+architectures.
+
 ## 5.6 Robustness implementation
 
 Perturbations are implemented as classes with `__call__` rather than closures.
@@ -150,27 +169,35 @@ ImageNet-normalised but epsilon is meaningful in [0,1] pixel space, so the
 perturbation is divided by the per-channel standard deviation to keep epsilon
 interpretable as a fraction of the pixel range.
 
+Figure 5.7 shows the top of the module. The prediction that destructive
+perturbations would cost far more accuracy than rescaling ones is written into
+the docstring with its reasoning, and was committed before the suite ran. That
+is the evidence behind the claim in §7.2: the prediction cannot have been
+fitted to the result, because the file records it first. Figure 5.8 shows the
+FGSM implementation, where the docstring sets out why attacking the true label
+guarantees a collapse to zero whatever the model's real robustness, and the
+code therefore defaults to the model's own prediction.
+
 ## 5.7 Problems encountered
 
-Seventeen defects or misjudgements were encountered. The four that materially
-shaped the *results* are discussed below. Four that shaped the tooling rather
-than the findings are in Appendix A.5, and the remaining nine are tabulated.
-They are recorded because Lesson 3 requires reflection on implementation
-problems.
+Seventeen defects or misjudgements were encountered, and they are recorded
+because Lesson 3 requires reflection on implementation problems. The four that
+materially shaped the *results* are discussed below, four that shaped the
+tooling are in Appendix A.5, and the remaining nine are tabulated.
 
 **1. Benchmark overestimated training cost by seven times.** It measured full
-backpropagation through all parameters and projected 2.1 to 3.4 hours per
-model, but training keeps most of the backbone frozen. Measured throughput was
-144 images per second against a projected 15 to 25. Being wrong conservatively
-is the right direction when planning to a deadline, but the methodology quotes
-the measured figure.
+backpropagation through all parameters, but training keeps most of the backbone
+frozen. Being wrong conservatively is the right direction when planning to a
+deadline, but the methodology quotes the measured figure.
 
 The remaining nine were minor in isolation but are recorded because several
 would have produced invalid results or silent failures rather than visible
 errors. Defects 13 and 14 appeared only on a second machine, and defect 17 only
 when the program was started the way a user starts it. Together they are the
 argument for testing a deliverable somewhere other than where it was built, by
-the route it will actually be used.
+the route it will actually be used. Table 5.1 lists them.
+
+**Table 5.1: The nine remaining defects and what each would have cost**
 
 | # | Defect | Consequence if unfixed |
 |---|---|---|
@@ -184,10 +211,9 @@ the route it will actually be used.
 | 16 | The setup scripts checked that a Python existed but not which version | On a machine with only Python 3.14 they would proceed and then fail at the numpy build, reproducing defect 5 on the user's machine instead of the developer's |
 | 17 | The frozen installer handed its own `TCL_LIBRARY` down to the program it had just installed | The detector failed to start with `Can't find a usable init.tcl` when launched from the installer's own tick box, although the install was correct and the desktop shortcut worked |
 
-Two smaller issues were also fixed. Skimage warned that LBP on floating-point
-images behaves unpredictably where adjacent pixels are near-equal, resolved by
-computing on `uint8`. And the robustness plotting grid was hardcoded at 2×3,
-silently dropping two families once FGSM split into two label regimes.
+Two smaller issues were also fixed: LBP was computed on `uint8` after skimage
+warned about floating-point behaviour, and a hardcoded 2×3 plotting grid was
+silently dropping two perturbation families.
 
 **6. Two training runs stopped by configuration, not convergence.** The first
 full run halted at eight epochs with validation loss still falling and accuracy
@@ -215,18 +241,11 @@ changed the number, not the conclusion.
 
 ## 5.8 Reflection on the methodology
 
-The iterative approach was directly responsible for several of the above being
-caught. Items 6, 7 and 10 were each found by examining a result that looked
-wrong rather than by testing code in isolation, one being a model plateauing
-lower than expected and the other an adversarial result that was implausibly
-perfect. The pattern worth generalising is that an anomalous number is more
-useful treated as a question than as an answer. Item 6 led to item 7 and the
-project's clearest ablation, and item 10 produced both a defensible adversarial
-figure and a methodological point worth reporting in its own right.
-
-The cost is that this style of working is hard to schedule. Three training runs
-were needed where one was planned. A more prescriptive plan would have been
-easier to track but would have shipped the 78.7% result without questioning it.
+Items 6, 7 and 10 were each caught by examining a result that looked wrong
+rather than by testing code in isolation, which is what the iterative approach
+in §3.2 was chosen for. The cost is that this style of working is hard to
+schedule: three training runs were needed where one was planned. Section 7.4
+evaluates the trade in full.
 
 ---
 
