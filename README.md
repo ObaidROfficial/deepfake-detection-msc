@@ -1,6 +1,6 @@
 # AI-Based Deepfake Detection Using Machine Learning with Robustness Evaluation
 
-MSc Advanced Computing Project (COM7014) — Arden University
+MSc Advanced Computing Project (COM7014), Arden University
 
 **Author:** Muhammad Obaid Ur Rehman (STU1215887)
 **Supervisor:** Dr. Muhammad Saqib
@@ -10,20 +10,19 @@ MSc Advanced Computing Project (COM7014) — Arden University
 
 ## Overview
 
-This project builds and evaluates a machine learning system for detecting
-deepfake facial imagery. It goes beyond reporting a single accuracy figure in
-two ways that matter for real deployment:
+This project builds and evaluates a machine learning system that detects deepfake
+face images. Rather than reporting one accuracy figure it looks at two things that
+matter when a detector is actually used.
 
-1. **Cross-dataset generalisation.** The model is trained on one dataset and
-   tested on a second produced by a completely different forgery method. This
-   tests whether it learned a general notion of facial forgery or just memorised
-   the artefacts of one generator.
+1. **Cross-dataset generalisation.** The model is trained on one dataset and tested
+   on a second dataset made by a completely different forgery method. This tests
+   whether the model learned what a fake face is in general or only learned the
+   artefacts of one generator.
 
-2. **Robustness evaluation.** The trained model is re-scored against JPEG
-   compression, noise, blur, downscaling, brightness and contrast shifts, and
-   FGSM adversarial perturbation. Images shared on social platforms are
-   recompressed and resized constantly, so a detector that only works on pristine
-   inputs is of limited practical value.
+2. **Robustness evaluation.** The trained model is tested again under JPEG
+   compression, noise, blur, downscaling, brightness and contrast changes and FGSM
+   adversarial perturbation. Images on social media are compressed and resized all
+   the time so a detector that only works on clean images is of limited use.
 
 ---
 
@@ -44,26 +43,27 @@ two ways that matter for real deployment:
 | **A** | [140k Real and Fake Faces](https://www.kaggle.com/datasets/xhlulu/140k-real-and-fake-faces) | Train / validate / in-domain test | 70k real (Flickr, FFHQ) + 70k fake (StyleGAN) |
 | **B** | [Deepfake and Real Images](https://www.kaggle.com/datasets/manjilkarki/deepfake-and-real-images) | Cross-dataset test **only** | ~190k images derived from [OpenForensics](https://zenodo.org/record/5528418), in-the-wild face forgeries |
 
-The two datasets use different generation methods on purpose. Dataset A is fully
-synthetic GAN-generated faces; Dataset B is in-the-wild manipulation with varied
-pose, lighting and background. Dataset B is never used for training.
+The two datasets were chosen because they use different generation methods.
+Dataset A is fully synthetic GAN generated faces whilst Dataset B is in-the-wild
+manipulation with different poses, lighting and backgrounds. Dataset B is never
+used for training.
 
 ### Note on dataset selection
 
-The original project proposal specified FaceForensics++ and the Kaggle DFDC
-corpus. Neither was usable in practice:
+The approved proposal specified FaceForensics++ and the Kaggle DFDC dataset but
+neither could be used.
 
-- **FaceForensics++** requires a signed EULA submitted to TU Munich with manual
-  approval, typically one to two weeks with no guarantee inside the project
-  window. It is also distributed as raw video requiring frame extraction and
-  face cropping.
-- **Kaggle DFDC** is approximately 470GB of video. Decoding that volume on a
-  CPU-only machine is not achievable in the time available.
+- **FaceForensics++** needs a signed EULA to be sent to TU Munich and manually
+  approved. This usually takes one to two weeks with no guarantee it would fall
+  inside the project timeline. The data is also raw video which needs frame
+  extraction and face cropping.
+- **Kaggle DFDC** is approximately 470GB of video. Decoding this on a CPU only
+  machine was not possible in the time available.
 
-Both substitutes provide pre-extracted 256×256 face crops with open access,
-which removes the video decoding stage entirely. This deviation is documented
-and justified in Chapter 3 of the report, and its consequences — chiefly reduced
-comparability with FF++-benchmarked literature — are discussed in Chapter 7.
+Both replacement datasets come as pre-extracted 256×256 face crops with open
+access so no video decoding is needed. This change is explained in Chapter 3 of
+the report and the main consequence, which is that results are less comparable
+to work that uses FF++, is discussed in Chapter 7.
 
 ---
 
@@ -76,20 +76,20 @@ comparability with FF++-benchmarked literature — are discussed in Chapter 7.
 | Main | MobileNetV2 (ImageNet pretrained) | Primary model, chosen for CPU feasibility |
 | Comparison | EfficientNet-B0 (ImageNet pretrained) | Architecture comparison |
 
-Both CNNs use two-stage transfer learning: train the classifier head with the
-backbone frozen, then unfreeze the trailing feature blocks and fine-tune at a
-low learning rate. The two networks are configured to **matched trainable
-capacity** (1,208,642 against 1,131,954 parameters, within 6.4%) rather than the
-same nominal setting, because their backbones are structured very differently —
-19 small blocks against 9 large stages. Without this the comparison would
-measure adaptation capacity rather than architecture.
+Both CNNs use two-stage transfer learning. The classifier head is trained first
+with the backbone frozen and then the last feature blocks are unfrozen and
+fine-tuned at a low learning rate. The two networks are set to **matched
+trainable capacity** (1,208,642 against 1,131,954 parameters, within 6.4%)
+rather than the same setting as their backbones are built very differently with
+19 small blocks against 9 large stages. Without this the comparison would be
+measuring adaptation capacity and not architecture.
 
 ---
 
 ## Headline results
 
-All models trained on Dataset A at 224×224, evaluated on a held-out split of
-Dataset A (in-domain) and on Dataset B (never seen during training).
+All models were trained on Dataset A at 224×224 and tested on a held-out split
+of Dataset A (in-domain) and on Dataset B (never seen in training).
 
 | Model | In-domain acc | In-domain AUC | Cross-dataset acc | Cross-dataset AUC | Gap |
 |---|---|---|---|---|---|
@@ -98,93 +98,92 @@ Dataset A (in-domain) and on Dataset B (never seen during training).
 | MobileNetV2 | 0.9430 | 0.9869 | 0.5110 | 0.5593 | 43.2 |
 | EfficientNet-B0 | 0.9457 | 0.9910 | 0.5038 | 0.5285 | 44.2 |
 
-**In-domain accuracy rises 21 points across the four models. Cross-dataset
-accuracy never leaves the neighbourhood of chance, and the generalisation gap
-widens monotonically.** Every gain from better representation learning was
-absorbed by the source domain.
+**In-domain accuracy goes up 21 points across the four models but cross-dataset
+accuracy stays near chance and the generalisation gap gets wider every time.**
+The better representations were completely absorbed by the source domain.
 
-A threshold diagnostic confirms this is a *representation* failure rather than a
-*calibration* one: the best accuracy achievable at any threshold in either
-polarity is 0.5453. No operating point recovers usable performance.
+A threshold diagnostic shows this is a *representation* failure and not a
+*calibration* failure. The best accuracy possible at any threshold in either
+polarity is 0.5453 so no operating point gives usable performance.
 
-Because MobileNetV2 and EfficientNet-B0 are structurally very different and fail
-identically at matched capacity, the result is not attributable to one
-architecture choice.
+MobileNetV2 and EfficientNet-B0 are structurally very different and fail in the
+same way at matched capacity so the result is not down to one architecture
+choice.
 
 ### Robustness (MobileNetV2, clean baseline 0.9430)
 
 | Perturbation | Worst setting | Accuracy | Drop |
 |---|---|---|---|
 | Downscale round-trip | 32px | 0.5580 | 0.385 |
-| Gaussian noise | σ = 0.10 | 0.6797 | 0.263 |
+| Gaussian noise | σ = 0.10 | 0.6798 | 0.263 |
 | JPEG compression | quality 10 | 0.7288 | 0.214 |
 | Gaussian blur | k = 7 | 0.7943 | 0.149 |
 | Contrast | ±40% | 0.9048 | 0.038 |
 | Brightness | ±40% | 0.9105 | 0.032 |
 | **FGSM (white-box)** | **ε = 0.005** | **0.0520** | **0.891** |
 
-Perturbations that destroy high-frequency information cost up to 38.5 accuracy
-points; intensity rescaling of comparable perceptual magnitude costs at most
-3.8. This supports the account that the discriminative signal is concentrated in
-the high-frequency band (Frank et al., 2020), which independently explains why
-raising input resolution from 128px to 224px was worth **+10.1 accuracy
-points**.
+Perturbations that remove high frequency information cost up to 38.5 accuracy
+points whilst changing intensity by a similar visible amount costs at most 3.8.
+This is consistent with the explanation that the useful signal sits in the high
+frequency band (Frank et al., 2020) and with raising the input resolution from
+128px to 224px being worth **+10.1 accuracy points**. It does not prove which
+features the network actually uses.
 
 ---
 
 ## Install and run
 
-### Option 1 — the installer (no command line)
+### Option 1: the installer (no command line)
 
 Download the installer for your platform from the
 [latest release](https://github.com/ObaidROfficial/deepfake-detection-msc/releases/latest)
-and run it:
+and run it.
 
 | Platform | File | Requires |
 |---|---|---|
 | Windows | `OBI-DeepFake-Image-Detector-Setup.exe` | 64-bit Windows 10 or later |
 | macOS | `OBI-DeepFake-Image-Detector-Setup-macOS-arm64.zip` | **Apple Silicon** (M1 or later), macOS 11+ |
 
-**Intel Macs are not supported.** The macOS binary is built for `arm64` only.
-On an Intel Mac, install from source with `setup.sh` instead — the application
-itself runs fine there, it is only the compiled installer that is
-architecture-specific.
+**Intel Macs are not supported** as the macOS installer is built for `arm64`
+only. On an Intel Mac install from source with `setup.sh` instead. The
+application itself works there and it is only the compiled installer that is
+tied to the architecture.
 
-On macOS, unzip first: the executable bit does not survive a plain download,
-which is why that asset is a `.zip` rather than a bare file.
+On macOS unzip the file first. The executable permission is lost in a normal
+download which is why it is a `.zip` and not a plain file.
 
-It sets everything up and downloads the trained weights. On Windows it puts a
-shortcut on your desktop; on macOS it installs an app into your Applications
-folder, which is where a Mac user expects to find it. **Python is not required
-beforehand.** If the machine has nothing suitable, the installer offers to
-download the official Python 3.11.9 from python.org, checks it against the
-published checksum, and installs it. Around 700MB is downloaded in total, so it
-needs an internet connection and a few minutes.
+The installer sets everything up and downloads the trained weights. On Windows
+it puts a shortcut on the desktop and on macOS it installs an app into the
+Applications folder. **Python does not need to be installed beforehand.** If the
+machine has no suitable version the installer offers to download the official
+Python 3.11.9 from python.org, checks it against the published checksum and
+installs it. Around 700MB is downloaded in total so it needs an internet
+connection and a few minutes.
 
-"Nothing suitable" means no Python between 3.9 and 3.13. A machine running only
-Python 3.14 counts: numpy has no wheel for it and falls back to a source build
-that fails, which is what happened when this project was first set up. The
-installer detects that up front and installs 3.11.9 alongside rather than
-failing halfway through. Your existing Python is left untouched and stays the
+No suitable version means no Python between 3.9 and 3.13. A machine with only
+Python 3.14 counts as this because numpy has no wheel for it and falls back to a
+source build that fails, which is what happened when this project was first set
+up. The installer checks for this at the start and installs 3.11.9 alongside
+rather than failing halfway. The existing Python is left as it is and stays the
 default for everything else.
 
-Two things to expect, both because these executables are not code-signed
-(signing needs a paid certificate from Microsoft or Apple):
+The executables are not code signed (this needs a paid certificate from
+Microsoft or Apple) so expect two things.
 
 - **Windows** shows "Windows protected your PC". Click *More info* → *Run anyway*.
-- **macOS** refuses to open it on a double-click. Right-click the file, choose
-  *Open*, then confirm.
+- **macOS** will not open it on a double-click. Right-click the file, choose
+  *Open* and then confirm.
 
-How the installer works, and how to build it yourself, is in
+How the installer works and how to build it yourself is explained in
 [installer/README.md](installer/README.md).
 
-To remove it later: on Windows run the uninstaller that was placed in the
-install folder, and on macOS drag the app from Applications to the Trash. See
+To remove it later run the uninstaller in the install folder on Windows, or on
+macOS drag the app from Applications to the Trash. See
 [Uninstalling](#uninstalling).
 
-### Option 2 — from source
+### Option 2: from source
 
-For anyone who wants the experiment code as well as the application.
+This is for anyone who wants the experiment code as well as the application.
 
 **Windows**
 
@@ -202,11 +201,11 @@ cd deepfake-detection-msc
 chmod +x setup.sh && ./setup.sh
 ```
 
-This route does need Python 3.9–3.13 already installed. It creates a virtual
-environment, installs the CPU build of PyTorch and all dependencies, downloads
-the trained weights from Releases, and verifies the install. Add `-Minimal`
-(Windows) or `--minimal` (Unix) to install only what the demo needs, skipping
-the experiment dependencies.
+This option does need Python 3.9–3.13 installed already. It creates a virtual
+environment, installs the CPU version of PyTorch and all dependencies, downloads
+the trained weights from Releases and checks the install. Add `-Minimal`
+(Windows) or `--minimal` (Unix) to install only what the demo needs and skip the
+experiment dependencies.
 
 Then:
 
@@ -214,17 +213,17 @@ Then:
 .\run.ps1        # or ./run.sh on macOS/Linux
 ```
 
-Either way the detector opens in its own window. Choose an image and it
-returns a REAL or FAKE verdict with a confidence percentage.
+With either option the detector opens in its own window. Choose an image and it
+gives a REAL or FAKE verdict with a confidence percentage.
 
-The interface warns when an input falls outside the conditions the model was
-validated on, and states where the detector is known to fail. That is
-deliberate rather than decorative — see the results above.
+The interface warns when an image is outside the conditions the model was
+tested on and states where the detector is known to fail. This is on purpose
+because of the results above.
 
 ### Classifying images from a script
 
-The same inference code is available as a command line tool, which is useful
-for batches. It needs the source install:
+The same inference code is available as a command line tool which is useful for
+batches. It needs the source install.
 
 ```powershell
 python src\predict.py --image your_photo.jpg
@@ -237,24 +236,25 @@ python src\predict.py --image your_photo.jpg
     confidence  : high
 ```
 
-`predict.py` also accepts `--folder` for batch classification and `--csv` to
-write results out. No datasets or Kaggle account needed.
+`predict.py` also takes `--folder` to classify a batch and `--csv` to save the
+results. No datasets or Kaggle account are needed.
 
 ## For markers and reviewers
 
-**See [REPRODUCE.md](REPRODUCE.md).** Four paths depending on available time:
-inspect the committed results (~1 min), run the detector on your own images
-(~5 min), re-verify every reported number from the released weights (~50 min),
-or rebuild everything from scratch (~8 h). No GPU needed for any of them.
+**See [REPRODUCE.md](REPRODUCE.md).** There are four options depending on how
+much time you have. You can look at the committed results (~1 min), run the
+detector on your own images (~5 min), check every reported number from the
+released weights (~50 min) or rebuild everything from scratch (~8 h). None of
+these need a GPU.
 
 ---
 
 ## Rebuilding the experiments
 
-The two options above install the application. To re-run the experiments
-themselves you also need the datasets, which means a Kaggle account. Full
-instructions are in **[SETUP.md](SETUP.md)**; the short version, if you would
-rather set the environment up by hand than use `setup.ps1`:
+The two options above install the application. To run the experiments again the
+datasets are also needed which means a Kaggle account. Full instructions are in
+**[SETUP.md](SETUP.md)**. If you would rather set up the environment by hand than
+use `setup.ps1` the short version is below.
 
 ```powershell
 python -m venv venv
@@ -303,8 +303,7 @@ deepfake-detection-msc/
 │   ├── evaluate.py          # in-domain + cross-dataset, threshold diagnostic
 │   └── robustness.py        # degradation suite + FGSM
 ├── models/                  # trained weights (gitignored - see Releases)
-├── results/                 # metrics CSVs and 25 figures
-└── docs/                    # report chapters in Markdown
+└── results/                 # metrics CSVs and 25 figures
 ```
 
 ### Using the detector
@@ -317,18 +316,17 @@ python src\predict.py --folder images\ --csv out.csv   # batch
 
 ### Uninstalling
 
-**If you used the installer on Windows.** Run
-`OBI-DeepFake-Image-Detector-Uninstall.exe` from the install folder. The
-installer puts it there, so it is not a separate download. It removes the
-application, its virtual environment, the model weights and the shortcut.
+**Installer on Windows.** Run `OBI-DeepFake-Image-Detector-Uninstall.exe` from
+the install folder. The installer puts it there so it is not a separate
+download. It removes the application, its virtual environment, the model weights
+and the shortcut.
 
-**If you used the installer on macOS.** Drag the app from Applications to the
-Trash. Everything the program uses lives inside the bundle, so nothing is left
-behind except the shared PyTorch cache in your home folder, which other Python
-software may also be using. There is no uninstaller on macOS because there is
-nothing for one to do.
+**Installer on macOS.** Drag the app from Applications to the Trash. Everything
+the program uses is inside the app bundle so nothing is left behind except the
+shared PyTorch cache in your home folder, which other Python software may also
+use. There is no uninstaller on macOS as there is nothing for it to do.
 
-**If you installed from source.**
+**Installed from source.**
 
 ```powershell
 .\uninstall.ps1 -DryRun      # show what would be removed, delete nothing
@@ -340,14 +338,14 @@ nothing for one to do.
 ./uninstall.sh
 ```
 
-Both leave the shared PyTorch and Hugging Face caches in your home directory
-alone by default, because other Python projects on the machine use them. Pass
-`-Caches` / `--caches` to clear those too. A `kaggle.json` credential, if you
-have one, is never touched — it belongs to you, not to this project.
+By default both leave the shared PyTorch and Hugging Face caches in your home
+folder alone as other Python projects on the machine use them. Add `-Caches` /
+`--caches` to clear those as well. A `kaggle.json` credential file is never
+touched as it belongs to you and not to this project.
 
 ### Reproducing the experiments
 
-Requires the datasets — see [REPRODUCE.md](REPRODUCE.md).
+This needs the datasets, see [REPRODUCE.md](REPRODUCE.md).
 
 ```powershell
 python src\benchmark.py                        # optional: check CPU speed
@@ -365,59 +363,59 @@ python src\evaluate.py --model efficientnet_b0
 ## Reproducibility
 
 - Every random operation is seeded from `config.yaml` (`project.seed: 42`)
-- Split manifests are committed as CSVs, so the exact same subset can be
-  rebuilt from the same source datasets
-- `data_prep.py` asserts that train, validation and test splits are disjoint and
-  fails loudly on any overlap
-- All hyperparameters live in `config.yaml` rather than scattered through code
+- Split manifests are committed as CSVs so the exact same subset can be rebuilt
+  from the same datasets
+- `data_prep.py` checks that the train, validation and test splits do not
+  overlap and stops with an error if they do
+- All hyperparameters are in `config.yaml` and not spread through the code
 
-Note that CPU training is not bit-for-bit deterministic across different
-machines, since some backend kernels vary. The data sampling and splits are
-exactly reproducible, which is the part that affects the validity of the results.
+CPU training is not bit-for-bit reproducible on different machines as some
+backend kernels vary. The data sampling and splits are exactly reproducible and
+this is the part the validity of the results depends on.
 
 ---
 
 ## Hardware
 
-Developed and trained on a CPU-only laptop: 12 cores, 16GB RAM, Intel integrated
-graphics, no CUDA. Thread count is capped at 8 in `config.yaml` so the machine
-stays usable during long runs. This constraint shaped several design decisions,
-particularly the choice of MobileNetV2 and the decision to subsample rather than
-train on the full 140k images. Those trade-offs are discussed in the report.
+The project was developed and trained on a CPU only laptop with 12 cores, 16GB
+RAM, Intel integrated graphics and no CUDA. The thread count is capped at 8 in
+`config.yaml` so the machine can still be used during long runs. This limit
+shaped several design decisions, mainly choosing MobileNetV2 and using a subset
+rather than all 140k images. These trade-offs are discussed in the report.
 
-One measured consequence worth noting: identical training epochs varied between
-11.4 and 48.8 minutes purely because of background load on the machine. CPU
-training is far more sensitive to system contention than GPU training, which
-limits how precisely timing claims can be stated.
+One thing worth noting is that the same training epoch took anywhere between
+11.4 and 48.8 minutes only because of other work running on the machine. CPU
+training is much more sensitive to this than GPU training which limits how
+precise any timing figures can be.
 
 ---
 
 ## Status
 
-Experimental work complete. Four models trained and evaluated, robustness suite
-and adversarial evaluation run, all results in `results/`. Report chapters
-drafted in `docs/` and being finalised.
+Experimental work is complete. Four models were trained and evaluated and the
+robustness suite and adversarial evaluation were run, with all results in
+`results/`. The final report has been submitted.
 
-Total compute for all experiments: approximately **eight hours on CPU**.
+Total compute for all experiments was approximately **eight hours on CPU**.
 
-Outstanding: literature review citations to be verified, robustness suite to be
-repeated on EfficientNet-B0, final report assembly.
+The robustness suite was only run on MobileNetV2. Repeating it on
+EfficientNet-B0 is left as further work.
 
 ---
 
 ## Licence
 
-Code released under the MIT Licence — see [LICENSE](LICENSE).
+The code is released under the MIT Licence, see [LICENSE](LICENSE).
 
-Datasets remain under their original licences and are **not** redistributed here.
-Dataset A's real images derive from NVIDIA's FFHQ (CC BY-NC-SA 4.0). Dataset B
-derives from OpenForensics, released for research use. Both are downloaded
-directly from Kaggle by the user under their own account.
+The datasets stay under their original licences and are **not** redistributed
+here. Dataset A's real images come from NVIDIA's FFHQ (CC BY-NC-SA 4.0) and
+Dataset B comes from OpenForensics which is released for research use. Both are
+downloaded directly from Kaggle by the user with their own account.
 
 ---
 
 ## Academic integrity
 
-This repository is submitted as part of an assessed MSc project. It is public so
-that the work can be verified and built upon. If you are a student on the same
-module, use it as a reference for approach and cite it — do not copy it.
+This repository is part of an assessed MSc project. It is public so the work can
+be checked and built on. If you are a student on the same module please use it
+as a reference for the approach and cite it, but do not copy it.
